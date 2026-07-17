@@ -13,9 +13,13 @@ SCHEMA     := fixtures/schema/fixture.schema.json
 CANONICAL  := $(wildcard fixtures/canonical/*.json)
 INVALID    := $(wildcard fixtures/invalid/*.json)
 
-.PHONY: help fmt lint test ci bootstrap-check build fixturectl \
+PROBE      := $(BIN_DIR)/interop-probe
+DOCKER    ?= docker
+NATIVE_IMAGE ?= snap-interop-native:local
+
+.PHONY: help fmt lint test ci bootstrap-check build fixturectl probe-bin \
 	fixtures fixtures-check fixtures-update \
-	native python images up down probe interop report sbom scan
+	native python images up down probe smoke-native interop report sbom scan
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -64,16 +68,21 @@ test: ## Run unit tests, fixture validation and golden checks
 bootstrap-check: ## Validate Milestone 0 repository skeleton
 	@./scripts/bootstrap-check.sh
 
-build: fixturectl ## Build tooling binaries
+build: fixturectl probe-bin ## Build tooling binaries
 
 fixturectl: ## Build fixturectl into bin/
 	@mkdir -p $(BIN_DIR)
 	@$(GO) build -o $(FIXTURECTL) ./tooling/fixturectl
 
+probe-bin: ## Build interop-probe into bin/
+	@mkdir -p $(BIN_DIR)
+	@$(GO) build -o $(PROBE) ./tooling/interop-probe
+
 ci: ## Non-interactive CI entrypoint
 	@echo "Running make ci"
 	@$(MAKE) lint
 	@$(MAKE) test
+	@$(MAKE) build
 	@echo "ci passed"
 
 # --- fixture compilation ---
@@ -109,23 +118,56 @@ fixtures-update: fixturectl ## Explicitly regenerate compiled golden fixtures
 
 
 
-native: ## Build native server image (Milestone 2)
-	@echo "native: not implemented until Milestone 2"; exit 1
+native: ## Build native Snap7 server image (linux/amd64)
+	@$(DOCKER) build --platform=linux/amd64 \
+		-f servers/native/Dockerfile \
+		-t $(NATIVE_IMAGE) .
 
 python: ## Build Python server image (Milestone 3)
 	@echo "python: not implemented until Milestone 3"; exit 1
 
-images: ## Build both server images
-	@echo "images: not implemented until Milestones 2 and 3"; exit 1
+images: native ## Build available server images
+	@echo "images: native built; python pending Milestone 3"
 
-up: ## Start compose services (requires real images)
-	@echo "up: placeholder images are not runnable"; exit 1
+up: ## Start native compose service
+	@docker compose --profile native up -d --build native
 
 down: ## Stop compose services
-	@docker compose --profile servers down --remove-orphans 2>/dev/null || true
+	@docker compose --profile native --profile python --profile servers down --remove-orphans 2>/dev/null || true
 
-probe: ## Run independent smoke probe (Milestone 2+)
-	@echo "probe: not implemented until Milestone 2"; exit 1
+probe: probe-bin ## Smoke-probe native server on localhost:1102
+	@$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 0 -length 8 -expect-hex 0102030405060708
+	@$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 8 -length 4 -write-hex deadbeef
+
+smoke-native: native probe-bin ## Build native image, run it, probe read/write, tear down
+	@cid=$$($(DOCKER) run -d --rm --platform=linux/amd64 \
+		-p 1102:102 \
+		-v "$(CURDIR)/fixtures/compiled:/fixtures:ro" \
+		--read-only \
+		--tmpfs /tmp \
+		--tmpfs /run/snap-interop:uid=10001,gid=10001,mode=0755 \
+		--cap-drop ALL --cap-add NET_BIND_SERVICE \
+		-e SNAP_INTEROP_FIXTURE=/fixtures/basic-db.compiled.json \
+		$(NATIVE_IMAGE)); \
+	echo "started $$cid"; \
+	ok=0; \
+	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
+		if $(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 0 -length 8 -expect-hex 0102030405060708 >/tmp/snap-interop-probe.out 2>&1; then \
+			ok=1; break; \
+		fi; \
+		sleep 1; \
+	done; \
+	if [ "$$ok" -ne 1 ]; then \
+		echo "FAIL: native smoke read"; \
+		$(DOCKER) logs "$$cid" || true; \
+		cat /tmp/snap-interop-probe.out || true; \
+		$(DOCKER) stop "$$cid" >/dev/null || true; \
+		exit 1; \
+	fi; \
+	cat /tmp/snap-interop-probe.out; \
+	$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 8 -length 4 -write-hex deadbeef; \
+	$(DOCKER) stop "$$cid" >/dev/null; \
+	echo "smoke-native passed"
 
 interop: ## Full interop gate (Milestone 4)
 	@echo "interop: not implemented until Milestone 4"; exit 1

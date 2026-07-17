@@ -7,8 +7,9 @@ fixture_compiler: "0.1.0"
 
 native_snap7:
   repository: "https://github.com/SCADACS/snap7"
-  revision: null # immutable commit SHA required before native image builds
-  license: "LGPL-3.0-or-later" # confirm against pinned revision
+  revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"
+  license: "LGPL-3.0-or-later"
+  note: "SCADACS fork (Snap7 1.4.0 lineage). Upstream unix makefiles cover x86_64/i386/armv6/armv7; aarch64 needs a custom makefile before linux/arm64 images."
 
 python_snap7:
   package: "python-snap7"
@@ -16,8 +17,9 @@ python_snap7:
   extras: []
 
 base_images:
-  native_builder: null # digest-pinned when Dockerfiles land
-  native_runtime: null
+  # debian:bookworm-slim — digest recorded from local pull 2026-07-17; wire into Dockerfile in M6.
+  native_builder: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
+  native_runtime: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
   python_runtime: null
 
 tooling:

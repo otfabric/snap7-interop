@@ -1,6 +1,50 @@
-# Placeholder CMake project for the native Snap7 adapter (Milestone 2).
 cmake_minimum_required(VERSION 3.20)
 project(snap_interop_native LANGUAGES CXX)
 
-# Sources and Snap7 integration land with the native vertical slice.
-message(STATUS "snap-interop native adapter skeleton only — no targets yet")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(NOT SNAP7_ROOT)
+  message(FATAL_ERROR "SNAP7_ROOT must point at a built Snap7 source tree")
+endif()
+
+find_path(SNAP7_INCLUDE_DIR
+  NAMES snap7.h
+  HINTS
+    "${SNAP7_ROOT}/release/Wrappers/c-cpp"
+    "${SNAP7_ROOT}/examples/plain-c"
+    "${SNAP7_ROOT}/examples/cpp"
+  REQUIRED
+)
+
+find_library(SNAP7_LIBRARY
+  NAMES snap7
+  HINTS
+    "${SNAP7_ROOT}/build/bin/x86_64-linux"
+    "${SNAP7_ROOT}/build/bin/aarch64-linux"
+    "${SNAP7_LIB_DIR}"
+  REQUIRED
+)
+
+find_package(nlohmann_json 3.11 REQUIRED)
+
+add_executable(snap-interop-native
+  src/main.cpp
+  src/fixture.cpp
+  src/log.cpp
+  src/state.cpp
+)
+
+target_include_directories(snap-interop-native PRIVATE
+  "${SNAP7_INCLUDE_DIR}"
+  "${CMAKE_CURRENT_SOURCE_DIR}/src"
+)
+
+target_link_libraries(snap-interop-native PRIVATE
+  "${SNAP7_LIBRARY}"
+  nlohmann_json::nlohmann_json
+  pthread
+)
+
+install(TARGETS snap-interop-native RUNTIME DESTINATION bin)

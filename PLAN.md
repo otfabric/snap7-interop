@@ -8,8 +8,8 @@ Last updated: 2026-07-17
 | --- | --- | --- |
 | M0 — Repository bootstrap | **complete** | `make ci` passes locally; Dockerfiles are non-runnable placeholders |
 | M1 — Fixture schema and compiler | **complete** | Schema, validate, compile, digests, goldens; `make ci` green |
-| M2 — Minimal native Snap7 server | **next** | Blocked on Snap7 pin (spike §5.1) |
-| M3 — Minimal pure-Python server | not started | Blocked on python-snap7 pin (spike §5.2) |
+| M2 — Minimal native Snap7 server | **complete** | `make smoke-native` passes (DB read + write); ASan/UBSan CI deferred |
+| M3 — Minimal pure-Python server | **next** | Blocked on python-snap7 pin (spike §5.2) |
 | M4 — Interoperability runner | not started | |
 | M5 — Fixture matrix expansion | not started | |
 | M6 — CI, security and release hardening | not started | |
@@ -17,30 +17,24 @@ Last updated: 2026-07-17
 
 ### Current focus
 
-Milestone 2 / PR 4 — Native vertical slice (pin Snap7, DB1 registration, Docker image, readiness, one black-box read).
+Milestone 3 / PR 5 — Python vertical slice (pin `python-snap7`, pure-Python server, same compiled fixture + smoke probe).
 
-Resolve spike §5.1 before freezing the native revision in `versions.yaml`.
+### Completed (M0–M1)
 
-### Completed (M0)
+- [x] Bootstrap, schema, `fixturectl` validate/compile, goldens; `make ci` green
 
-- [x] Bootstrap documents, MIT license, meta files, skeleton, Makefile, compose, versions, ADRs, CI
-- [x] Clean checkout passes `make ci` locally
-- [x] No external images published
+### Completed (M2)
 
-### Completed (M1)
+- [x] Pin Snap7 `f6ff90317ca5d54250f4dcd29209689a74e26d82` (LGPL-3.0-or-later)
+- [x] Multi-stage native Dockerfile + C++ adapter (compiled fixture → DB registration)
+- [x] Lifecycle JSON logs, state snapshot, SIGTERM, healthcheck, non-root + `NET_BIND_SERVICE`
+- [x] Independent `interop-probe` (stdlib Go S7 smoke client)
+- [x] `make smoke-native` — exact DB read `0102030405060708` and write `deadbeef`
 
-- [x] JSON Schema Draft 2020-12 (`fixtures/schema/fixture.schema.json`)
-- [x] `fixturectl validate` with schema + semantic checks and stable codes
-- [x] `fixturectl compile` with zero-fill, typed patches, digests, canonical JSON
-- [x] Canonical fixtures: `basic-db`, `typed-values`, `write-cycle`
-- [x] Invalid fixtures: bounds, overlap, type-range, duplicate-area
-- [x] Golden compiled outputs; update only via `make fixtures-update`
+### Open items (M2 follow-up / M3)
 
-### Open items (M2)
-
-- [ ] Pin immutable Snap7 revision and record license obligations
-- [ ] Multi-stage native Dockerfile + C++ adapter for compiled fixtures
-- [ ] Health/readiness and independent smoke probe for DB read/write
+- [ ] AddressSanitizer / UndefinedBehaviorSanitizer CI jobs for native adapter
+- [ ] Pin `python-snap7` and implement pure-Python server (M3)
 
 ## 1. Delivery strategy
 
@@ -188,7 +182,7 @@ Compile a human-authored DB fixture into deterministic bytes.
 
 ## Milestone 2 — Minimal native Snap7 server
 
-Status: **not started**
+Status: **complete** (2026-07-17) — ASan/UBSan CI deferred
 
 ### Goal
 
@@ -196,10 +190,10 @@ Expose DB1 from one compiled fixture through native Snap7.
 
 ### Work
 
-1. Select and pin an immutable Snap7 revision.
-2. Review and record license obligations.
-3. Build Snap7 from source in a multi-stage Dockerfile.
-4. Implement a narrow C++ adapter:
+1. [x] Select and pin an immutable Snap7 revision.
+2. [x] Review and record license obligations.
+3. [x] Build Snap7 from source in a multi-stage Dockerfile.
+4. [x] Implement a narrow C++ adapter:
    - parse compiled JSON;
    - allocate stable backing buffers;
    - register DB areas;
@@ -207,12 +201,12 @@ Expose DB1 from one compiled fixture through native Snap7.
    - emit lifecycle logs;
    - write state snapshots;
    - handle signals.
-5. Add health checking.
-6. Add a minimal independent smoke probe.
-7. Verify exact DB reads.
-8. Verify write mutation.
-9. Add AddressSanitizer and UndefinedBehaviorSanitizer jobs.
-10. Document upstream constraints.
+5. [x] Add health checking.
+6. [x] Add a minimal independent smoke probe.
+7. [x] Verify exact DB reads.
+8. [x] Verify write mutation.
+9. [ ] Add AddressSanitizer and UndefinedBehaviorSanitizer jobs.
+10. [x] Document upstream constraints.
 
 ### Technical cautions
 
@@ -223,10 +217,11 @@ Expose DB1 from one compiled fixture through native Snap7.
 
 ### Exit criteria
 
-- Native container becomes healthy.
-- Probe reads exact fixture bytes.
-- Probe writes and observes exact changed bytes.
-- Normal and sanitizer shutdowns are clean.
+- [x] Native container becomes healthy.
+- [x] Probe reads exact fixture bytes.
+- [x] Probe writes and observes exact changed bytes.
+- [x] Normal shutdown is clean (`docker stop` / SIGTERM).
+- [ ] Sanitizer shutdowns are clean (deferred with item 9).
 
 ## Milestone 3 — Minimal pure-Python server
 

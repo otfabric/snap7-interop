@@ -64,6 +64,9 @@ require_dir internal/fixture
 require_file fixtures/schema/fixture.schema.json
 require_file go.mod
 require_file tooling/fixturectl/main.go
+require_file tooling/interop-probe/main.go
+require_file servers/native/src/main.cpp
+require_file servers/native/CMakeLists.txt
 
 echo "==> checking ADRs"
 for adr in \
