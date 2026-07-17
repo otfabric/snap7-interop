@@ -16,10 +16,14 @@ INVALID    := $(wildcard fixtures/invalid/*.json)
 PROBE      := $(BIN_DIR)/interop-probe
 DOCKER    ?= docker
 NATIVE_IMAGE ?= snap-interop-native:local
+PYTHON_IMAGE ?= snap-interop-python:local
+PROBE_ADDR ?= 127.0.0.1:1102
+PYTHON_DIR := servers/python
 
 .PHONY: help fmt lint test ci bootstrap-check build fixturectl probe-bin \
 	fixtures fixtures-check fixtures-update \
-	native python images up down probe smoke-native interop report sbom scan
+	native python images up down probe smoke-native smoke-python \
+	python-test _smoke-run interop report sbom scan
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -30,7 +34,7 @@ fmt: ## Format Go and other available trees
 	@chmod +x scripts/bootstrap-check.sh
 	@if command -v ruff >/dev/null 2>&1; then \
 		echo "Running ruff format"; \
-		ruff format servers/python || true; \
+		ruff format $(PYTHON_DIR); \
 	fi
 
 lint: ## Lint bootstrap contracts, shell scripts and Go packages
@@ -63,7 +67,18 @@ test: ## Run unit tests, fixture validation and golden checks
 	done; \
 	if [ "$$failed" -ne 0 ]; then exit 1; fi
 	@$(MAKE) fixtures-check
+	@$(MAKE) python-test
 	@echo "OK: tests passed"
+
+python-test: ## Run Python adapter unit tests in an isolated venv
+	@echo "Running Python adapter tests"
+	@python3 -m venv $(PYTHON_DIR)/.venv
+	@$(PYTHON_DIR)/.venv/bin/pip -q install --upgrade pip
+	@$(PYTHON_DIR)/.venv/bin/pip -q install -r $(PYTHON_DIR)/requirements-dev.txt
+	@$(PYTHON_DIR)/.venv/bin/pip -q install -e $(PYTHON_DIR)
+	@cd $(PYTHON_DIR) && .venv/bin/ruff check .
+	@cd $(PYTHON_DIR) && .venv/bin/mypy
+	@cd $(PYTHON_DIR) && .venv/bin/pytest
 
 bootstrap-check: ## Validate Milestone 0 repository skeleton
 	@./scripts/bootstrap-check.sh
@@ -123,51 +138,59 @@ native: ## Build native Snap7 server image (linux/amd64)
 		-f servers/native/Dockerfile \
 		-t $(NATIVE_IMAGE) .
 
-python: ## Build Python server image (Milestone 3)
-	@echo "python: not implemented until Milestone 3"; exit 1
+python: ## Build pure-Python server image
+	@$(DOCKER) build \
+		-f servers/python/Dockerfile \
+		-t $(PYTHON_IMAGE) .
 
-images: native ## Build available server images
-	@echo "images: native built; python pending Milestone 3"
+images: native python ## Build both server images
+	@echo "images: native and python built"
 
-up: ## Start native compose service
-	@docker compose --profile native up -d --build native
+up: ## Start both compose server profiles
+	@docker compose --profile native --profile python up -d --build
 
 down: ## Stop compose services
 	@docker compose --profile native --profile python --profile servers down --remove-orphans 2>/dev/null || true
 
-probe: probe-bin ## Smoke-probe native server on localhost:1102
-	@$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 0 -length 8 -expect-hex 0102030405060708
-	@$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 8 -length 4 -write-hex deadbeef
+probe: probe-bin ## Smoke-probe an S7 server (PROBE_ADDR, default localhost:1102)
+	@$(PROBE) -addr $(PROBE_ADDR) -db 1 -offset 0 -length 8 -expect-hex 0102030405060708
+	@$(PROBE) -addr $(PROBE_ADDR) -db 1 -offset 8 -length 4 -write-hex deadbeef
 
 smoke-native: native probe-bin ## Build native image, run it, probe read/write, tear down
-	@cid=$$($(DOCKER) run -d --rm --platform=linux/amd64 \
-		-p 1102:102 \
+	@$(MAKE) _smoke-run IMAGE=$(NATIVE_IMAGE) HOST_PORT=1102 PLATFORM=--platform=linux/amd64 LABEL=native
+
+smoke-python: python probe-bin ## Build Python image, run it, probe read/write, tear down
+	@$(MAKE) _smoke-run IMAGE=$(PYTHON_IMAGE) HOST_PORT=2102 PLATFORM= LABEL=python
+
+_smoke-run:
+	@cid=$$($(DOCKER) run -d --rm $(PLATFORM) \
+		-p $(HOST_PORT):102 \
 		-v "$(CURDIR)/fixtures/compiled:/fixtures:ro" \
 		--read-only \
 		--tmpfs /tmp \
 		--tmpfs /run/snap-interop:uid=10001,gid=10001,mode=0755 \
 		--cap-drop ALL --cap-add NET_BIND_SERVICE \
 		-e SNAP_INTEROP_FIXTURE=/fixtures/basic-db.compiled.json \
-		$(NATIVE_IMAGE)); \
+		$(IMAGE)); \
 	echo "started $$cid"; \
 	ok=0; \
 	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
-		if $(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 0 -length 8 -expect-hex 0102030405060708 >/tmp/snap-interop-probe.out 2>&1; then \
+		if $(PROBE) -addr 127.0.0.1:$(HOST_PORT) -db 1 -offset 0 -length 8 -expect-hex 0102030405060708 >/tmp/snap-interop-probe.out 2>&1; then \
 			ok=1; break; \
 		fi; \
 		sleep 1; \
 	done; \
 	if [ "$$ok" -ne 1 ]; then \
-		echo "FAIL: native smoke read"; \
+		echo "FAIL: $(LABEL) smoke read"; \
 		$(DOCKER) logs "$$cid" || true; \
 		cat /tmp/snap-interop-probe.out || true; \
 		$(DOCKER) stop "$$cid" >/dev/null || true; \
 		exit 1; \
 	fi; \
 	cat /tmp/snap-interop-probe.out; \
-	$(PROBE) -addr 127.0.0.1:1102 -db 1 -offset 8 -length 4 -write-hex deadbeef; \
+	$(PROBE) -addr 127.0.0.1:$(HOST_PORT) -db 1 -offset 8 -length 4 -write-hex deadbeef; \
 	$(DOCKER) stop "$$cid" >/dev/null; \
-	echo "smoke-native passed"
+	echo "smoke-$(LABEL) passed"
 
 interop: ## Full interop gate (Milestone 4)
 	@echo "interop: not implemented until Milestone 4"; exit 1

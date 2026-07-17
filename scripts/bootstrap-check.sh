@@ -67,6 +67,9 @@ require_file tooling/fixturectl/main.go
 require_file tooling/interop-probe/main.go
 require_file servers/native/src/main.cpp
 require_file servers/native/CMakeLists.txt
+require_file servers/python/snap_interop_server/main.py
+require_file servers/python/requirements.txt
+require_file servers/python/tests/test_no_native_lib.py
 
 echo "==> checking ADRs"
 for adr in \
@@ -80,11 +83,16 @@ do
 done
 require_file docs/compatibility.md
 
-echo "==> checking versions.yaml unresolved upstream pins are explicit"
-if grep -E '^(  revision: null|  version: null)' versions.yaml >/dev/null; then
-  ok "versions.yaml still marks unresolved upstream pins as null"
+echo "==> checking versions.yaml upstream pins"
+if grep -Eq 'revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"' versions.yaml; then
+  ok "native_snap7 revision pinned"
 else
-  fail "versions.yaml should keep unresolved Snap7 / python-snap7 pins as null until chosen"
+  fail "native_snap7.revision must remain the pinned immutable SHA"
+fi
+if grep -Eq 'version: "3.0.0"' versions.yaml; then
+  ok "python_snap7 version pinned"
+else
+  fail "python_snap7.version must remain the pinned release"
 fi
 
 echo "==> parsing YAML manifests"

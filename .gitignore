@@ -18,6 +18,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+servers/python/.venv/
 
 # Go
 coverage.out

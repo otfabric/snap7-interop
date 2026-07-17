@@ -13,18 +13,19 @@ native_snap7:
 
 python_snap7:
   package: "python-snap7"
-  version: null # exact release required before Python image builds
+  version: "3.0.0"
   extras: []
+  note: "Pure-Python Server API (snap7.server.Server). Image must not load libsnap7."
 
 base_images:
   # debian:bookworm-slim — digest recorded from local pull 2026-07-17; wire into Dockerfile in M6.
   native_builder: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
   native_runtime: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
-  python_runtime: null
+  python_runtime: "docker.io/library/python:3.12-slim-bookworm"
 
 tooling:
   go: "1.23"
-  python: null
+  python: "3.12"
 
 images:
   native: "ghcr.io/otfabric/snap-interop-native"

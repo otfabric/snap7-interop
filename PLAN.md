@@ -9,32 +9,32 @@ Last updated: 2026-07-17
 | M0 — Repository bootstrap | **complete** | `make ci` passes locally; Dockerfiles are non-runnable placeholders |
 | M1 — Fixture schema and compiler | **complete** | Schema, validate, compile, digests, goldens; `make ci` green |
 | M2 — Minimal native Snap7 server | **complete** | `make smoke-native` passes (DB read + write); ASan/UBSan CI deferred |
-| M3 — Minimal pure-Python server | **next** | Blocked on python-snap7 pin (spike §5.2) |
-| M4 — Interoperability runner | not started | |
+| M3 — Minimal pure-Python server | **complete** | `make smoke-python` passes; no native lib; same probe bytes as native |
+| M4 — Interoperability runner | **next** | Equivalence gate over both images |
 | M5 — Fixture matrix expansion | not started | |
 | M6 — CI, security and release hardening | not started | |
 | M7 — go-s7comm consumption | not started | Downstream |
 
 ### Current focus
 
-Milestone 3 / PR 5 — Python vertical slice (pin `python-snap7`, pure-Python server, same compiled fixture + smoke probe).
+Milestone 4 / PR 6 — Equivalence gate (`make interop`, dual-endpoint compare, reports).
 
-### Completed (M0–M1)
+### Completed (M0–M2)
 
-- [x] Bootstrap, schema, `fixturectl` validate/compile, goldens; `make ci` green
+- [x] Bootstrap, schema/compiler, native Snap7 server, independent probe; `make smoke-native` green
 
-### Completed (M2)
+### Completed (M3)
 
-- [x] Pin Snap7 `f6ff90317ca5d54250f4dcd29209689a74e26d82` (LGPL-3.0-or-later)
-- [x] Multi-stage native Dockerfile + C++ adapter (compiled fixture → DB registration)
-- [x] Lifecycle JSON logs, state snapshot, SIGTERM, healthcheck, non-root + `NET_BIND_SERVICE`
-- [x] Independent `interop-probe` (stdlib Go S7 smoke client)
-- [x] `make smoke-native` — exact DB read `0102030405060708` and write `deadbeef`
+- [x] Pin `python-snap7==3.0.0` (pure-Python `snap7.server.Server`)
+- [x] Internal `Snap7ServerAdapter` + compiled fixture load / area registration
+- [x] Lifecycle logs, state snapshot, SIGTERM, healthcheck, non-root + `NET_BIND_SERVICE`
+- [x] `ruff` / `mypy` / `pytest`, including no-native-lib proof
+- [x] `make smoke-python` — same read/write bytes as native smoke
 
-### Open items (M2 follow-up / M3)
+### Open items (follow-up / M4)
 
 - [ ] AddressSanitizer / UndefinedBehaviorSanitizer CI jobs for native adapter
-- [ ] Pin `python-snap7` and implement pure-Python server (M3)
+- [ ] `make interop` dual-server equivalence runner + reports (M4)
 
 ## 1. Delivery strategy
 
@@ -225,7 +225,7 @@ Expose DB1 from one compiled fixture through native Snap7.
 
 ## Milestone 3 — Minimal pure-Python server
 
-Status: **not started**
+Status: **complete** (2026-07-17)
 
 ### Goal
 
@@ -233,26 +233,26 @@ Expose the same compiled DB fixture through an independent pure-Python implement
 
 ### Work
 
-1. Pin an exact current `python-snap7` release.
-2. Verify the preferred pure-Python server API with a short spike.
-3. Lock Python dependencies.
-4. Implement an internal compatibility adapter around upstream calls.
-5. Implement compiled fixture loading and area registration.
-6. Implement common lifecycle logs, health and state snapshot behavior.
-7. Add `ruff`, static typing and `pytest`.
-8. Add a build-time test proving no native Snap7 library is loaded.
-9. Run the same read and write smoke probes.
+1. [x] Pin an exact current `python-snap7` release.
+2. [x] Verify the preferred pure-Python server API with a short spike.
+3. [x] Lock Python dependencies.
+4. [x] Implement an internal compatibility adapter around upstream calls.
+5. [x] Implement compiled fixture loading and area registration.
+6. [x] Implement common lifecycle logs, health and state snapshot behavior.
+7. [x] Add `ruff`, static typing and `pytest`.
+8. [x] Add a build-time test proving no native Snap7 library is loaded.
+9. [x] Run the same read and write smoke probes.
 
 ### Exit criteria
 
-- Python container consumes the same compiled fixture.
-- Identical probe operations return identical bytes.
-- The runtime has no native Snap7 dependency.
-- State snapshot follows the same repository contract.
+- [x] Python container consumes the same compiled fixture.
+- [x] Identical probe operations return identical bytes.
+- [x] The runtime has no native Snap7 dependency.
+- [x] State snapshot follows the same repository contract.
 
 ## Milestone 4 — Interoperability runner
 
-Status: **not started**
+Status: **not started** (next)
 
 ### Goal
 

@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+snap_interop_server/__init__.py
+snap_interop_server/__main__.py
+snap_interop_server/adapter.py
+snap_interop_server/fixture.py
+snap_interop_server/log.py
+snap_interop_server/main.py
+snap_interop_server/state.py
+snap_interop_server.egg-info/PKG-INFO
+snap_interop_server.egg-info/SOURCES.txt
+snap_interop_server.egg-info/dependency_links.txt
+snap_interop_server.egg-info/entry_points.txt
+snap_interop_server.egg-info/requires.txt
+snap_interop_server.egg-info/top_level.txt
+tests/test_fixture.py
+tests/test_no_native_lib.py
