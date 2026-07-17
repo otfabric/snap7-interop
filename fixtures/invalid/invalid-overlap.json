@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "invalid-overlap",
+  "description": "Typed patches overlap without explicit replace",
+  "server": {
+    "rack": 0,
+    "slot": 2
+  },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 16,
+      "access": "read-write",
+      "values": [
+        {
+          "offset": 0,
+          "dataType": "uint16",
+          "byteOrder": "big-endian",
+          "value": 1
+        },
+        {
+          "offset": 1,
+          "dataType": "uint16",
+          "byteOrder": "big-endian",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

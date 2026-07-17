@@ -1,0 +1,55 @@
+# Local dual-server layout. Services are placeholders until adapters exist.
+# Suggested host ports avoid binding privileged host port 102.
+#
+# Do not expose these listeners to untrusted networks.
+
+name: snap-interop
+
+services:
+  native:
+    profiles: ["servers"]
+    build:
+      context: ./servers/native
+      dockerfile: Dockerfile
+    image: snap-interop-native:local
+    environment:
+      SNAP_INTEROP_FIXTURE: /fixtures/basic-db.compiled.json
+      SNAP_INTEROP_LISTEN_ADDRESS: "0.0.0.0"
+      SNAP_INTEROP_PORT: "102"
+      SNAP_INTEROP_LOG_FORMAT: json
+      SNAP_INTEROP_STATE_PATH: /run/snap-interop/state.json
+    ports:
+      - "1102:102"
+    volumes:
+      - ./fixtures/compiled:/fixtures:ro
+      - native-run:/run/snap-interop
+    read_only: true
+    tmpfs:
+      - /tmp
+    # healthcheck and capability drops land with the native adapter
+
+  python:
+    profiles: ["servers"]
+    build:
+      context: ./servers/python
+      dockerfile: Dockerfile
+    image: snap-interop-python:local
+    environment:
+      SNAP_INTEROP_FIXTURE: /fixtures/basic-db.compiled.json
+      SNAP_INTEROP_LISTEN_ADDRESS: "0.0.0.0"
+      SNAP_INTEROP_PORT: "102"
+      SNAP_INTEROP_LOG_FORMAT: json
+      SNAP_INTEROP_STATE_PATH: /run/snap-interop/state.json
+    ports:
+      - "2102:102"
+    volumes:
+      - ./fixtures/compiled:/fixtures:ro
+      - python-run:/run/snap-interop
+    read_only: true
+    tmpfs:
+      - /tmp
+    # healthcheck and capability drops land with the Python adapter
+
+volumes:
+  native-run:
+  python-run:

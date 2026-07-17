@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/otfabric/snap-interop/fixtures/schema/fixture.schema.json",
+  "title": "snap-interop source fixture",
+  "description": "Implementation-neutral source fixture. Typed values are encoded only by the canonical compiler.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "description", "server", "areas"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "server": {
+      "$ref": "#/$defs/server"
+    },
+    "areas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/area"
+      }
+    },
+    "expectations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/expectation"
+      }
+    }
+  },
+  "$defs": {
+    "server": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rack", "slot"],
+      "properties": {
+        "rack": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "slot": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        },
+        "pduSize": {
+          "type": "integer",
+          "minimum": 240,
+          "maximum": 960
+        },
+        "cpuState": {
+          "type": "string",
+          "enum": ["run", "stop", "unknown"]
+        },
+        "identity": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "orderCode": { "type": "string" },
+            "serialNumber": { "type": "string" },
+            "moduleName": { "type": "string" }
+          }
+        }
+      }
+    },
+    "area": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "size", "access"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["db", "markers", "inputs", "outputs"]
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "access": {
+          "type": "string",
+          "enum": ["read-write", "read-only"]
+        },
+        "initial": {
+          "$ref": "#/$defs/bulkInitializer"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/valuePatch"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "db" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["number"]
+          },
+          "else": {
+            "not": {
+              "required": ["number"]
+            }
+          }
+        }
+      ]
+    },
+    "bulkInitializer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hex": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-fA-F]{2})*$"
+        },
+        "base64": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "replace": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "oneOf": [
+        { "required": ["hex"] },
+        { "required": ["base64"] },
+        { "required": ["bytes"] }
+      ]
+    },
+    "valuePatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offset", "dataType", "value"],
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "dataType": {
+          "type": "string",
+          "enum": [
+            "bool",
+            "int8",
+            "uint8",
+            "int16",
+            "uint16",
+            "int32",
+            "uint32",
+            "int64",
+            "uint64",
+            "float32",
+            "float64",
+            "bytes",
+            "ascii"
+          ]
+        },
+        "byteOrder": {
+          "type": "string",
+          "enum": ["big-endian", "little-endian"]
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "value": {
+          "type": ["boolean", "number", "string", "array"]
+        },
+        "replace": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "areaRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["db", "markers", "inputs", "outputs"]
+        },
+        "number": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      }
+    },
+    "bytePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hex": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-fA-F]{2})*$"
+        },
+        "base64": {
+          "type": "string"
+        },
+        "bytes": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      },
+      "oneOf": [
+        { "required": ["hex"] },
+        { "required": ["base64"] },
+        { "required": ["bytes"] }
+      ]
+    },
+    "expectation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "area"],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "read",
+            "write",
+            "rejected-read",
+            "rejected-write",
+            "final-state",
+            "reconnect"
+          ]
+        },
+        "area": {
+          "$ref": "#/$defs/areaRef"
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 7
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "data": {
+          "$ref": "#/$defs/bytePayload"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "accepted",
+                "success",
+                "address-out-of-range",
+                "write-protected",
+                "unsupported",
+                "transport-failure",
+                "protocol-failure"
+              ]
+            },
+            {
+              "$ref": "#/$defs/bytePayload"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

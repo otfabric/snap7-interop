@@ -1,0 +1,25 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "invalid-type-range",
+  "description": "uint8 value outside 0..255",
+  "server": {
+    "rack": 0,
+    "slot": 2
+  },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 8,
+      "access": "read-write",
+      "values": [
+        {
+          "offset": 0,
+          "dataType": "uint8",
+          "value": 300
+        }
+      ]
+    }
+  ]
+}

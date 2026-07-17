@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "basic-db",
+  "revision": 1,
+  "description": "Single zero-filled DB1 with a short hex prefix for smoke reads",
+  "tags": ["db", "smoke", "read"],
+  "requires": ["area.db", "operation.read"],
+  "server": {
+    "rack": 0,
+    "slot": 2,
+    "pduSize": 480
+  },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 64,
+      "access": "read-write",
+      "initial": {
+        "hex": "0102030405060708"
+      }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 8,
+      "result": { "hex": "0102030405060708" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 8,
+      "length": 8,
+      "result": { "hex": "0000000000000000" }
+    }
+  ]
+}

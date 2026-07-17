@@ -1,0 +1,56 @@
+# Build outputs
+/bin/
+/fixturectl
+/dist/
+/release/
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# Tooling caches
+.cache/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Go
+coverage.out
+coverage.html
+cover.*
+*.test
+
+# CMake / native builds
+servers/native/build/
+cmake-build-*/
+
+# Runtime and reports
+/reports/
+/run/
+*.log
+
+# Compiled fixtures generated locally (committed goldens live under fixtures/compiled/)
+fixtures/compiled/*.tmp.json
+
+# Editor and OS
+.vscode/
+.idea/
+.cursor/
+.DS_Store
+*~
+
+# Docker
+docker.tar
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+credentials.json
+*.pem
+*.key

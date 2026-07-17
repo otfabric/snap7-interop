@@ -1,0 +1,64 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "typed-values",
+  "revision": 1,
+  "description": "DB and markers initialized with typed scalar patches",
+  "tags": ["db", "markers", "typed"],
+  "requires": ["area.db", "area.markers", "operation.read"],
+  "server": {
+    "rack": 0,
+    "slot": 2,
+    "pduSize": 480
+  },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "values": [
+        {
+          "offset": 0,
+          "dataType": "uint16",
+          "byteOrder": "big-endian",
+          "value": 4660
+        },
+        {
+          "offset": 2,
+          "dataType": "float32",
+          "byteOrder": "big-endian",
+          "value": 12.5
+        },
+        {
+          "offset": 6,
+          "dataType": "bool",
+          "bit": 0,
+          "value": true
+        }
+      ]
+    },
+    {
+      "type": "markers",
+      "size": 16,
+      "access": "read-write",
+      "values": [
+        {
+          "offset": 0,
+          "dataType": "int16",
+          "byteOrder": "big-endian",
+          "value": -1
+        }
+      ]
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 2,
+      "result": { "hex": "1234" }
+    }
+  ]
+}

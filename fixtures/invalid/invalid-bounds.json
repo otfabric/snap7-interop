@@ -1,0 +1,21 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "invalid-bounds",
+  "description": "Hex initializer exceeds declared area size",
+  "server": {
+    "rack": 0,
+    "slot": 2
+  },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 4,
+      "access": "read-write",
+      "initial": {
+        "hex": "0102030405"
+      }
+    }
+  ]
+}

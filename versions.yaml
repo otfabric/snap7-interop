@@ -1,0 +1,29 @@
+# Machine-readable version manifest for snap-interop.
+# Unresolved fields use null until the corresponding pin is chosen and recorded.
+
+snap_interop: "0.0.1"
+fixture_schema: "1.0.0"
+fixture_compiler: "0.1.0"
+
+native_snap7:
+  repository: "https://github.com/SCADACS/snap7"
+  revision: null # immutable commit SHA required before native image builds
+  license: "LGPL-3.0-or-later" # confirm against pinned revision
+
+python_snap7:
+  package: "python-snap7"
+  version: null # exact release required before Python image builds
+  extras: []
+
+base_images:
+  native_builder: null # digest-pinned when Dockerfiles land
+  native_runtime: null
+  python_runtime: null
+
+tooling:
+  go: "1.23"
+  python: null
+
+images:
+  native: "ghcr.io/otfabric/snap-interop-native"
+  python: "ghcr.io/otfabric/snap-interop-python"

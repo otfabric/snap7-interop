@@ -1,0 +1,14 @@
+[project]
+name = "snap-interop-server"
+version = "0.0.1"
+description = "Pure-Python snap-interop S7 server adapter (skeleton)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["snap_interop_server*"]
