@@ -26,6 +26,9 @@ type Expectation struct {
 	AreaNum   int
 	Offset    int
 	Length    int
+	Bit       int
+	HasBit    bool
+	Clients   int
 	Data      []byte
 	// WantOutcome is set for string results like "accepted".
 	WantOutcome s7client.Outcome
@@ -79,6 +82,11 @@ func parseExpectation(m map[string]any) (Expectation, error) {
 		AreaNum:   asInt(area["number"], 0),
 		Offset:    asInt(m["offset"], 0),
 		Length:    asInt(m["length"], 0),
+		Clients:   asInt(m["clients"], 0),
+	}
+	if _, ok := m["bit"]; ok {
+		exp.HasBit = true
+		exp.Bit = asInt(m["bit"], 0)
 	}
 	if data, ok := m["data"].(map[string]any); ok {
 		b, err := decodePayload(data)

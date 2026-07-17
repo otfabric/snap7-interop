@@ -1,0 +1,52 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "integer-boundaries",
+  "revision": 1,
+  "description": "Signed/unsigned integer boundary values as compiled big-endian bytes",
+  "tags": ["typed", "integers", "go-s7comm"],
+  "requires": ["area.db", "operation.read"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "values": [
+        { "offset": 0, "dataType": "int8", "value": -128 },
+        { "offset": 1, "dataType": "int8", "value": 127 },
+        { "offset": 2, "dataType": "uint8", "value": 255 },
+        { "offset": 3, "dataType": "uint8", "value": 0 },
+        { "offset": 4, "dataType": "int16", "byteOrder": "big-endian", "value": -32768 },
+        { "offset": 6, "dataType": "int16", "byteOrder": "big-endian", "value": 32767 },
+        { "offset": 8, "dataType": "uint16", "byteOrder": "big-endian", "value": 65535 },
+        { "offset": 10, "dataType": "int32", "byteOrder": "big-endian", "value": -2147483648 },
+        { "offset": 14, "dataType": "uint32", "byteOrder": "big-endian", "value": 4294967295 }
+      ]
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "807fff00" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 4,
+      "length": 6,
+      "result": { "hex": "80007fffffff" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 10,
+      "length": 8,
+      "result": { "hex": "80000000ffffffff" }
+    }
+  ]
+}

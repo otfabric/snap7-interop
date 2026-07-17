@@ -1,0 +1,68 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "markers-io",
+  "revision": 1,
+  "description": "Markers, inputs and outputs for ReadMerkers/ReadInputs/ReadOutputs",
+  "tags": ["markers", "inputs", "outputs", "go-s7comm"],
+  "requires": ["area.markers", "area.inputs", "area.outputs", "operation.read", "operation.write"],
+  "references": ["https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md#readwrite-api"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "markers",
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "aa55aa55" }
+    },
+    {
+      "type": "inputs",
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "01020304" }
+    },
+    {
+      "type": "outputs",
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "f0f1f2f3" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "markers" },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "aa55aa55" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "inputs" },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "01020304" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "outputs" },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "f0f1f2f3" }
+    },
+    {
+      "operation": "write",
+      "area": { "type": "markers" },
+      "offset": 0,
+      "data": { "hex": "deadbeef" },
+      "result": "accepted"
+    },
+    {
+      "operation": "read",
+      "area": { "type": "markers" },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "deadbeef" }
+    }
+  ]
+}

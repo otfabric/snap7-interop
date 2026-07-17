@@ -11,13 +11,13 @@ Last updated: 2026-07-17
 | M2 — Minimal native Snap7 server | **complete** | `make smoke-native` passes (DB read + write); ASan/UBSan CI deferred |
 | M3 — Minimal pure-Python server | **complete** | `make smoke-python` passes; no native lib; same probe bytes as native |
 | M4 — Interoperability runner | **complete** | `make interop` passes all compiled fixtures; JSON/MD/JUnit reports |
-| M5 — Fixture matrix expansion | **next** | Broaden fixture matrix for go-s7comm primitives |
+| M5 — Fixture matrix expansion | **complete** | 15 fixtures pass dual interop; go-s7comm read/write map covered |
 | M6 — CI, security and release hardening | not started | |
 | M7 — go-s7comm consumption | not started | Downstream |
 
 ### Current focus
 
-Milestone 5 — Fixture matrix expansion (markers/IO, boundaries, bits, OOR, read-only, concurrency, …).
+Milestone 6 — CI, security and release hardening.
 
 ### Completed (M0–M3)
 
@@ -33,10 +33,17 @@ Milestone 5 — Fixture matrix expansion (markers/IO, boundaries, bits, OOR, rea
 - [x] `make interop` (optional `FIXTURE=basic-db`) and CI `interop` job
 - [x] Deliberate mismatch unit test for diagnostics
 
-### Open items (follow-up / M5)
+### Completed (M5)
+
+- [x] Fixture matrix for go-s7comm ReadDB/WriteDB/ReadMerkers/ReadInputs/ReadOutputs/ReadArea/WriteArea
+- [x] Bit, OOR, RO reject, concurrent-read, reconnect, large-read, typed boundaries
+- [x] Probe/runner: bit ops, reconnect, concurrent-read; adapter RO/OOR/bit alignment
+- [x] Compatibility notes for Snap7 ResourceLess RO reject (`0x0A`)
+
+### Open items (follow-up)
 
 - [ ] AddressSanitizer / UndefinedBehaviorSanitizer CI jobs for native adapter
-- [ ] Expand fixture matrix (M5)
+- [ ] Timers/counters and Identify/SZL characterization (deferred from M5)
 
 ## 1. Delivery strategy
 
@@ -289,7 +296,7 @@ Make cross-server comparison a single local command and CI gate.
 
 ## Milestone 5 — Fixture matrix expansion
 
-Status: **not started** (next)
+Status: **complete** (2026-07-17)
 
 ### Goal
 
@@ -297,36 +304,34 @@ Cover the S7 operations required by `go-s7comm`.
 
 ### Add fixtures in this order
 
-1. multiple DBs;
-2. markers;
-3. inputs and outputs;
-4. integer boundaries;
-5. floating-point values;
-6. bit reads and writes;
-7. unaligned ranges;
-8. last-valid-byte access;
-9. out-of-range access;
-10. read-only rejection;
-11. large reads and PDU segmentation;
-12. concurrent clients;
-13. reconnect and state preservation;
-14. timers and counters after characterization;
-15. CPU state and identity where meaningful.
+1. [x] multiple DBs (`multiple-dbs`);
+2. [x] markers (`markers-io`);
+3. [x] inputs and outputs (`markers-io`);
+4. [x] integer boundaries (`integer-boundaries`);
+5. [x] floating-point values (`floating-point`);
+6. [x] bit reads and writes (`bit-access`);
+7. [x] unaligned ranges (`unaligned-range`);
+8. [x] last-valid-byte access (`last-valid-byte`);
+9. [x] out-of-range access (`out-of-range`);
+10. [x] read-only rejection (`read-only-reject`);
+11. [x] large reads within PDU (`large-read`; multi-PDU chunking remains client-side / M7);
+12. [x] concurrent clients (`concurrent-reads`);
+13. [x] reconnect and state preservation (`reconnect-state`);
+14. [ ] timers and counters after characterization;
+15. [ ] CPU state and identity where meaningful.
 
-For every fixture:
+For every shipped fixture:
 
-- add source JSON;
-- add compiled golden output;
-- declare capabilities;
-- run both adapters;
-- add operation expectations;
-- document known differences.
+- [x] source JSON + compiled golden;
+- [x] capabilities declared;
+- [x] dual-adapter expectations;
+- [x] known differences documented (`docs/compatibility.md`, `docs/go-s7comm-coverage.md`).
 
 ### Exit criteria
 
-- At least ten fixtures pass on both implementations.
-- Every supported `go-s7comm` read/write primitive has a matching fixture.
-- Known differences are classified rather than hidden.
+- [x] At least ten fixtures pass on both implementations (15 pass).
+- [x] Every supported `go-s7comm` read/write primitive has a matching fixture.
+- [x] Known differences are classified rather than hidden.
 
 ## Milestone 6 — CI, security and release hardening
 

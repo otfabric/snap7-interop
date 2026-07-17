@@ -9,8 +9,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 #include "snap7.h"
 
@@ -39,6 +41,140 @@ int AreaCodeFor(const std::string& type) {
     return srvAreaPA;
   }
   return -1;
+}
+
+// S7 area codes used in RW callbacks / PDU addressing.
+byte S7AreaCodeFor(const std::string& type) {
+  if (type == "inputs") {
+    return 0x81;
+  }
+  if (type == "outputs") {
+    return 0x82;
+  }
+  if (type == "markers") {
+    return 0x83;
+  }
+  if (type == "db") {
+    return 0x84;
+  }
+  return 0;
+}
+
+struct RWContext {
+  std::vector<snap_interop::AreaBuffer>* areas = nullptr;
+  std::mutex mu;
+};
+
+bool FixtureHasReadOnly(const snap_interop::CompiledFixture& fixture) {
+  for (const auto& a : fixture.areas) {
+    if (a.access == "read-only") {
+      return true;
+    }
+  }
+  return false;
+}
+
+snap_interop::AreaBuffer* FindArea(RWContext* ctx, int area, int db_number) {
+  if (ctx == nullptr || ctx->areas == nullptr) {
+    return nullptr;
+  }
+  for (auto& a : *ctx->areas) {
+    const byte code = S7AreaCodeFor(a.type);
+    if (code != static_cast<byte>(area)) {
+      continue;
+    }
+    if (a.type == "db") {
+      if (a.number == db_number) {
+        return &a;
+      }
+    } else {
+      return &a;
+    }
+  }
+  return nullptr;
+}
+
+int DataSizeByte(int word_len) {
+  switch (word_len) {
+    case S7WLBit:
+      return 1;
+    case S7WLByte:
+      return 1;
+    case S7WLWord:
+    case S7WLCounter:
+    case S7WLTimer:
+      return 2;
+    case S7WLDWord:
+    case S7WLReal:
+      return 4;
+    default:
+      return 0;
+  }
+}
+
+int S7API RWAreaCallBack(void* usrPtr, int /*Sender*/, int Operation, PS7Tag PTag,
+                         void* pUsrData) {
+  auto* ctx = static_cast<RWContext*>(usrPtr);
+  if (ctx == nullptr || PTag == nullptr || pUsrData == nullptr) {
+    return -1;
+  }
+
+  std::lock_guard<std::mutex> lock(ctx->mu);
+  auto* area = FindArea(ctx, PTag->Area, PTag->DBNumber);
+  if (area == nullptr) {
+    return -1;
+  }
+
+  const int elem_size = DataSizeByte(PTag->WordLen);
+  if (elem_size <= 0 || PTag->Size <= 0) {
+    return -1;
+  }
+
+  if (PTag->WordLen == S7WLBit) {
+    // Start is bit address; Size is element count (must be 1).
+    if (PTag->Size != 1) {
+      return -1;
+    }
+    const int byte_off = PTag->Start >> 3;
+    const int bit_idx = PTag->Start & 0x07;
+    if (byte_off < 0 || byte_off >= static_cast<int>(area->data.size())) {
+      return -1;
+    }
+    auto* buf = static_cast<pbyte>(pUsrData);
+    if (Operation == OperationRead) {
+      buf[0] = (area->data[static_cast<size_t>(byte_off)] >> bit_idx) & 0x01;
+      return 0;
+    }
+    if (area->access == "read-only") {
+      return -1;
+    }
+    if ((buf[0] & 0x01) != 0) {
+      area->data[static_cast<size_t>(byte_off)] |=
+          static_cast<uint8_t>(1u << bit_idx);
+    } else {
+      area->data[static_cast<size_t>(byte_off)] &=
+          static_cast<uint8_t>(~(1u << bit_idx));
+    }
+    return 0;
+  }
+
+  const int start = PTag->Start;  // byte offset for non-bit
+  const int nbytes = elem_size * PTag->Size;
+  if (start < 0 || nbytes <= 0 ||
+      start + nbytes > static_cast<int>(area->data.size())) {
+    return -1;
+  }
+
+  auto* buf = static_cast<pbyte>(pUsrData);
+  if (Operation == OperationRead) {
+    std::memcpy(buf, area->data.data() + start, static_cast<size_t>(nbytes));
+    return 0;
+  }
+  if (area->access == "read-only") {
+    return -1;
+  }
+  std::memcpy(area->data.data() + start, buf, static_cast<size_t>(nbytes));
+  return 0;
 }
 
 }  // namespace
@@ -123,36 +259,55 @@ int main(int argc, char** argv) {
     }
   }
 
-  for (auto& area : fixture.areas) {
-    const int code = AreaCodeFor(area.type);
-    if (code < 0) {
-      snap_interop::LogJSON("error", "fatal_error", fixture.id,
-                            "\"error\": \"unsupported area type " + area.type +
-                                "\"");
-      Srv_Destroy(&server);
-      return 1;
-    }
-    word index = 0;
-    if (area.type == "db") {
-      if (area.number < 1 || area.number > 65535) {
-        snap_interop::LogJSON("error", "fatal_error", fixture.id,
-                              "\"error\": \"invalid DB number\"");
-        Srv_Destroy(&server);
-        return 1;
-      }
-      index = static_cast<word>(area.number);
-    }
-    // Snap7 keeps this pointer for the server lifetime — do not reallocate.
-    err = Srv_RegisterArea(server, code, index, area.data.data(),
-                           static_cast<int>(area.data.size()));
+  RWContext rw_ctx;
+  rw_ctx.areas = &fixture.areas;
+  const bool resource_less = FixtureHasReadOnly(fixture);
+
+  if (resource_less) {
+    err = Srv_SetRWAreaCallback(server, RWAreaCallBack, &rw_ctx);
     if (err != 0) {
       char text[256];
       Srv_ErrorText(err, text, sizeof(text));
-      snap_interop::LogJSON("error", "fatal_error", fixture.id,
-                            std::string("\"error\": \"Srv_RegisterArea: ") +
-                                text + "\"");
+      snap_interop::LogJSON(
+          "error", "fatal_error", fixture.id,
+          std::string("\"error\": \"Srv_SetRWAreaCallback: ") + text + "\"");
       Srv_Destroy(&server);
       return 1;
+    }
+    snap_interop::LogJSON("info", "fixture_loaded", fixture.id,
+                          "\"mode\": \"resource-less-readonly\"");
+  } else {
+    for (auto& area : fixture.areas) {
+      const int code = AreaCodeFor(area.type);
+      if (code < 0) {
+        snap_interop::LogJSON("error", "fatal_error", fixture.id,
+                              "\"error\": \"unsupported area type " + area.type +
+                                  "\"");
+        Srv_Destroy(&server);
+        return 1;
+      }
+      word index = 0;
+      if (area.type == "db") {
+        if (area.number < 1 || area.number > 65535) {
+          snap_interop::LogJSON("error", "fatal_error", fixture.id,
+                                "\"error\": \"invalid DB number\"");
+          Srv_Destroy(&server);
+          return 1;
+        }
+        index = static_cast<word>(area.number);
+      }
+      // Snap7 keeps this pointer for the server lifetime — do not reallocate.
+      err = Srv_RegisterArea(server, code, index, area.data.data(),
+                             static_cast<int>(area.data.size()));
+      if (err != 0) {
+        char text[256];
+        Srv_ErrorText(err, text, sizeof(text));
+        snap_interop::LogJSON("error", "fatal_error", fixture.id,
+                              std::string("\"error\": \"Srv_RegisterArea: ") +
+                                  text + "\"");
+        Srv_Destroy(&server);
+        return 1;
+      }
     }
   }
 

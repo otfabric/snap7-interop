@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "unaligned-range",
+  "revision": 1,
+  "description": "Unaligned multi-byte reads across odd offsets",
+  "tags": ["db", "unaligned", "go-s7comm"],
+  "requires": ["area.db", "operation.read"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "initial": { "hex": "000102030405060708090a0b0c0d0e0f" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 1,
+      "length": 3,
+      "result": { "hex": "010203" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 5,
+      "length": 5,
+      "result": { "hex": "0506070809" }
+    }
+  ]
+}

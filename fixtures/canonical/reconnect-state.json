@@ -1,0 +1,40 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "reconnect-state",
+  "revision": 1,
+  "description": "Write, reconnect, and observe preserved server memory",
+  "tags": ["db", "reconnect", "go-s7comm"],
+  "requires": ["area.db", "operation.read", "operation.write", "operation.reconnect"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "initial": { "hex": "00000000" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "write",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "data": { "hex": "11223344" },
+      "result": "accepted"
+    },
+    {
+      "operation": "reconnect",
+      "area": { "type": "db", "number": 1 },
+      "result": "success"
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "11223344" }
+    }
+  ]
+}

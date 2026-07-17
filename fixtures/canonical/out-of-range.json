@@ -1,0 +1,49 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "out-of-range",
+  "revision": 1,
+  "description": "Out-of-range DB reads and writes must be rejected",
+  "tags": ["db", "oor", "go-s7comm"],
+  "requires": ["area.db", "operation.read", "operation.write"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "01020304" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "01020304" }
+    },
+    {
+      "operation": "rejected-read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 16,
+      "length": 1,
+      "result": "address-out-of-range"
+    },
+    {
+      "operation": "rejected-read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 14,
+      "length": 4,
+      "result": "address-out-of-range"
+    },
+    {
+      "operation": "rejected-write",
+      "area": { "type": "db", "number": 1 },
+      "offset": 15,
+      "data": { "hex": "aabb" },
+      "result": "address-out-of-range"
+    }
+  ]
+}

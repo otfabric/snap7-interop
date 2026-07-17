@@ -14,12 +14,17 @@ import (
 type Outcome string
 
 const (
-	OutcomeSuccess            Outcome = "success"
-	OutcomeAddressOutOfRange  Outcome = "address-out-of-range"
-	OutcomeWriteProtected     Outcome = "write-protected"
-	OutcomeUnsupported        Outcome = "unsupported"
-	OutcomeTransportFailure   Outcome = "transport-failure"
-	OutcomeProtocolFailure    Outcome = "protocol-failure"
+	OutcomeSuccess           Outcome = "success"
+	OutcomeAddressOutOfRange Outcome = "address-out-of-range"
+	OutcomeWriteProtected    Outcome = "write-protected"
+	OutcomeUnsupported       Outcome = "unsupported"
+	OutcomeTransportFailure  Outcome = "transport-failure"
+	OutcomeProtocolFailure   Outcome = "protocol-failure"
+)
+
+const (
+	transportByte = 0x02
+	transportBit  = 0x01
 )
 
 // Conn is a connected S7 session.
@@ -52,11 +57,23 @@ func (c *Conn) Close() error { return c.conn.Close() }
 
 // ReadArea reads bytes from a logical area.
 func (c *Conn) ReadArea(areaType string, number, offset, length int) (data []byte, outcome Outcome, err error) {
+	return c.read(areaType, number, offset*8, length, transportByte)
+}
+
+// ReadBit reads a single bit; returned data is one byte 0x00 or 0x01.
+func (c *Conn) ReadBit(areaType string, number, offset, bit int) (data []byte, outcome Outcome, err error) {
+	if bit < 0 || bit > 7 {
+		return nil, OutcomeUnsupported, fmt.Errorf("bit out of range: %d", bit)
+	}
+	return c.read(areaType, number, offset*8+bit, 1, transportBit)
+}
+
+func (c *Conn) read(areaType string, number, bitOffset, length int, transport byte) ([]byte, Outcome, error) {
 	areaCode, ok := areaCode(areaType)
 	if !ok {
 		return nil, OutcomeUnsupported, fmt.Errorf("unsupported area type %q", areaType)
 	}
-	item := encodeAnyPointer(areaCode, number, offset, length)
+	item := encodeAnyPointer(areaCode, number, bitOffset, length, transport)
 	param := append([]byte{0x04, 0x01}, item...)
 	req := append(s7Header(0x01, c.nextRef(), len(param), 0), param...)
 	if err := writeCOTPData(c.conn, req); err != nil {
@@ -88,18 +105,42 @@ func (c *Conn) ReadArea(areaType string, number, offset, length int) (data []byt
 	}
 	out := make([]byte, nbytes)
 	copy(out, payload[4:4+nbytes])
+	if transport == transportBit && len(out) > 0 {
+		out[0] &= 0x01
+		out = out[:1]
+	}
 	return out, OutcomeSuccess, nil
 }
 
 // WriteArea writes bytes to a logical area.
 func (c *Conn) WriteArea(areaType string, number, offset int, payload []byte) (outcome Outcome, err error) {
+	return c.write(areaType, number, offset*8, len(payload), transportByte, payload, 0x04)
+}
+
+// WriteBit writes a single bit (value non-zero sets the bit).
+func (c *Conn) WriteBit(areaType string, number, offset, bit int, set bool) (Outcome, error) {
+	if bit < 0 || bit > 7 {
+		return OutcomeUnsupported, fmt.Errorf("bit out of range: %d", bit)
+	}
+	val := byte(0)
+	if set {
+		val = 1
+	}
+	return c.write(areaType, number, offset*8+bit, 1, transportBit, []byte{val}, 0x03)
+}
+
+func (c *Conn) write(areaType string, number, bitOffset, elements int, transport byte, payload []byte, dataTransport byte) (Outcome, error) {
 	areaCode, ok := areaCode(areaType)
 	if !ok {
 		return OutcomeUnsupported, fmt.Errorf("unsupported area type %q", areaType)
 	}
-	item := encodeAnyPointer(areaCode, number, offset, len(payload))
+	item := encodeAnyPointer(areaCode, number, bitOffset, elements, transport)
 	param := append([]byte{0x05, 0x01}, item...)
-	data := []byte{0x00, 0x04, byte((len(payload) * 8) >> 8), byte(len(payload) * 8)}
+	bitLen := len(payload) * 8
+	if dataTransport == 0x03 {
+		bitLen = 1
+	}
+	data := []byte{0x00, dataTransport, byte(bitLen >> 8), byte(bitLen)}
 	data = append(data, payload...)
 	req := append(s7Header(0x01, c.nextRef(), len(param), len(data)), param...)
 	req = append(req, data...)
@@ -150,20 +191,19 @@ func areaCode(areaType string) (byte, bool) {
 	}
 }
 
-func encodeAnyPointer(areaCode byte, number, offset, length int) []byte {
+func encodeAnyPointer(areaCode byte, number, bitOffset, length int, transport byte) []byte {
 	dbNum := number
 	if areaCode != 0x84 {
 		dbNum = 0
 	}
-	bitOff := offset * 8
 	return []byte{
-		0x12, 0x0A, 0x10, 0x02,
+		0x12, 0x0A, 0x10, transport,
 		byte(length >> 8), byte(length),
 		byte(dbNum >> 8), byte(dbNum),
 		areaCode,
-		byte(bitOff >> 16),
-		byte(bitOff >> 8),
-		byte(bitOff),
+		byte(bitOffset >> 16),
+		byte(bitOffset >> 8),
+		byte(bitOffset),
 	}
 }
 

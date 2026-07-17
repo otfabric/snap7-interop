@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "concurrent-reads",
+  "revision": 1,
+  "description": "Multiple simultaneous clients read identical DB bytes",
+  "tags": ["db", "concurrency", "go-s7comm"],
+  "requires": ["area.db", "operation.read", "operation.concurrent-read"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "initial": { "hex": "c0ffee01c0ffee02" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "concurrent-read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 8,
+      "clients": 4,
+      "result": { "hex": "c0ffee01c0ffee02" }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "multiple-dbs",
+  "revision": 1,
+  "description": "Two DBs with distinct patterns for ReadDB/WriteDB coverage",
+  "tags": ["db", "go-s7comm", "ReadDB"],
+  "requires": ["area.db", "operation.read", "operation.write"],
+  "references": ["https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md#readwrite-api"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "initial": { "hex": "11111111" }
+    },
+    {
+      "type": "db",
+      "number": 2,
+      "size": 32,
+      "access": "read-write",
+      "initial": { "hex": "22222222" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "11111111" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 2 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "22222222" }
+    },
+    {
+      "operation": "write",
+      "area": { "type": "db", "number": 2 },
+      "offset": 4,
+      "data": { "hex": "abcd" },
+      "result": "accepted"
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 2 },
+      "offset": 4,
+      "length": 2,
+      "result": { "hex": "abcd" }
+    }
+  ]
+}

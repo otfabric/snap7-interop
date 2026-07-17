@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "last-valid-byte",
+  "revision": 1,
+  "description": "Read the last valid byte of a DB",
+  "tags": ["db", "boundary", "go-s7comm"],
+  "requires": ["area.db", "operation.read"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "000000000000000000000000000000ff" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 15,
+      "length": 1,
+      "result": { "hex": "ff" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 14,
+      "length": 2,
+      "result": { "hex": "00ff" }
+    }
+  ]
+}

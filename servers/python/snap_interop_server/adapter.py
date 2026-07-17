@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from snap7.server import Server
 from snap7.type import Parameter, SrvArea
 
 from snap_interop_server.fixture import AreaBuffer, CompiledFixture
+from snap_interop_server.server import InteropServer
 
 
 class Snap7ServerAdapter:
@@ -13,7 +13,7 @@ class Snap7ServerAdapter:
 
     def __init__(self) -> None:
         # Disable upstream's own event logger; we emit repository JSON logs.
-        self._server = Server(log=False)
+        self._server = InteropServer(log=False)
 
     def configure(self, listen_address: str, port: int, pdu_size: int) -> None:
         self._server.set_param(Parameter.LocalPort, port)
@@ -34,7 +34,9 @@ class Snap7ServerAdapter:
                 raise ValueError("invalid DB number")
             index = area.number
         # python-snap7 keeps this bytearray for the server lifetime.
-        rc = self._server.register_area(srv_area, index, area.data)
+        rc = self._server.register_area_with_access(
+            srv_area, index, area.data, area.access
+        )
         if rc != 0:
             raise RuntimeError(f"register_area failed with code {rc}")
 

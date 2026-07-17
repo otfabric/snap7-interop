@@ -1,0 +1,46 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "floating-point",
+  "revision": 1,
+  "description": "IEEE-754 float32/float64 big-endian patterns",
+  "tags": ["typed", "float", "go-s7comm"],
+  "requires": ["area.db", "operation.read"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 32,
+      "access": "read-write",
+      "values": [
+        { "offset": 0, "dataType": "float32", "byteOrder": "big-endian", "value": 12.5 },
+        { "offset": 4, "dataType": "float32", "byteOrder": "big-endian", "value": -1.0 },
+        { "offset": 8, "dataType": "float64", "byteOrder": "big-endian", "value": 1.0 }
+      ]
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "41480000" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 4,
+      "length": 4,
+      "result": { "hex": "bf800000" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 8,
+      "length": 8,
+      "result": { "hex": "3ff0000000000000" }
+    }
+  ]
+}

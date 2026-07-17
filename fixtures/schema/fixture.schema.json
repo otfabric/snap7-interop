@@ -289,8 +289,15 @@
             "rejected-read",
             "rejected-write",
             "final-state",
-            "reconnect"
+            "reconnect",
+            "concurrent-read"
           ]
+        },
+        "clients": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 32,
+          "description": "For concurrent-read: number of simultaneous clients"
         },
         "area": {
           "$ref": "#/$defs/areaRef"

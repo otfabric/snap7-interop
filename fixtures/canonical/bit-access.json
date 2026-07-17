@@ -1,0 +1,52 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "bit-access",
+  "revision": 1,
+  "description": "Bit reads and writes within a DB byte",
+  "tags": ["bit", "db", "go-s7comm"],
+  "requires": ["area.db", "operation.read", "operation.write", "operation.bit"],
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 16,
+      "access": "read-write",
+      "initial": { "hex": "00" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "write",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "bit": 0,
+      "data": { "hex": "01" },
+      "result": "accepted"
+    },
+    {
+      "operation": "write",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "bit": 3,
+      "data": { "hex": "01" },
+      "result": "accepted"
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 1,
+      "result": { "hex": "09" }
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "bit": 3,
+      "length": 1,
+      "result": { "hex": "01" }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "../schema/fixture.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "read-only-reject",
+  "revision": 1,
+  "description": "Writes to read-only DB must be rejected; reads still succeed",
+  "tags": ["db", "read-only", "go-s7comm"],
+  "requires": ["area.db", "operation.read", "operation.write", "access.read-only-enforce"],
+  "notes": "Stock Snap7 ResourceLess rejects map to item code 0x0A (normalized address-out-of-range), not a distinct write-protect code. Both adapters match that surface; follow-up read proves memory unchanged.",
+  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+  "areas": [
+    {
+      "type": "db",
+      "number": 1,
+      "size": 16,
+      "access": "read-only",
+      "initial": { "hex": "cafebabe" }
+    }
+  ],
+  "expectations": [
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "cafebabe" }
+    },
+    {
+      "operation": "rejected-write",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "data": { "hex": "deadbeef" },
+      "result": "address-out-of-range"
+    },
+    {
+      "operation": "read",
+      "area": { "type": "db", "number": 1 },
+      "offset": 0,
+      "length": 4,
+      "result": { "hex": "cafebabe" }
+    }
+  ]
+}

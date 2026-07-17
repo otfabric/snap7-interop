@@ -6,6 +6,7 @@ snap_interop_server/adapter.py
 snap_interop_server/fixture.py
 snap_interop_server/log.py
 snap_interop_server/main.py
+snap_interop_server/server.py
 snap_interop_server/state.py
 snap_interop_server.egg-info/PKG-INFO
 snap_interop_server.egg-info/SOURCES.txt
