@@ -31,7 +31,8 @@ servers/native/build/
 cmake-build-*/
 
 # Runtime and reports
-/reports/
+/reports/*
+!/reports/.gitkeep
 /run/
 *.log
 

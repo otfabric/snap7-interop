@@ -192,11 +192,12 @@ _smoke-run:
 	$(DOCKER) stop "$$cid" >/dev/null; \
 	echo "smoke-$(LABEL) passed"
 
-interop: ## Full interop gate (Milestone 4)
-	@echo "interop: not implemented until Milestone 4"; exit 1
+interop: ## Build both images, compare fixtures, write reports/ (FIXTURE=id optional)
+	@chmod +x scripts/interop-run.sh
+	@./scripts/interop-run.sh
 
-report: ## Generate interop reports (Milestone 4)
-	@echo "report: not implemented until Milestone 4"; exit 1
+report: ## Show latest interop markdown reports
+	@ls -1 reports/*/report.md 2>/dev/null || echo "no reports yet; run make interop"
 
 sbom: ## Generate SBOMs (Milestone 6)
 	@echo "sbom: not implemented until Milestone 6"; exit 1

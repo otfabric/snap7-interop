@@ -10,31 +10,33 @@ Last updated: 2026-07-17
 | M1 — Fixture schema and compiler | **complete** | Schema, validate, compile, digests, goldens; `make ci` green |
 | M2 — Minimal native Snap7 server | **complete** | `make smoke-native` passes (DB read + write); ASan/UBSan CI deferred |
 | M3 — Minimal pure-Python server | **complete** | `make smoke-python` passes; no native lib; same probe bytes as native |
-| M4 — Interoperability runner | **next** | Equivalence gate over both images |
-| M5 — Fixture matrix expansion | not started | |
+| M4 — Interoperability runner | **complete** | `make interop` passes all compiled fixtures; JSON/MD/JUnit reports |
+| M5 — Fixture matrix expansion | **next** | Broaden fixture matrix for go-s7comm primitives |
 | M6 — CI, security and release hardening | not started | |
 | M7 — go-s7comm consumption | not started | Downstream |
 
 ### Current focus
 
-Milestone 4 / PR 6 — Equivalence gate (`make interop`, dual-endpoint compare, reports).
+Milestone 5 — Fixture matrix expansion (markers/IO, boundaries, bits, OOR, read-only, concurrency, …).
 
-### Completed (M0–M2)
+### Completed (M0–M3)
 
-- [x] Bootstrap, schema/compiler, native Snap7 server, independent probe; `make smoke-native` green
+- [x] Bootstrap, schema/compiler, native + Python servers, smoke probes
 
-### Completed (M3)
+### Completed (M4)
 
-- [x] Pin `python-snap7==3.0.0` (pure-Python `snap7.server.Server`)
-- [x] Internal `Snap7ServerAdapter` + compiled fixture load / area registration
-- [x] Lifecycle logs, state snapshot, SIGTERM, healthcheck, non-root + `NET_BIND_SERVICE`
-- [x] `ruff` / `mypy` / `pytest`, including no-native-lib proof
-- [x] `make smoke-python` — same read/write bytes as native smoke
+- [x] Normalized outcomes (`success`, `address-out-of-range`, `write-protected`, …)
+- [x] Bounded readiness + fixture expectation execution on both endpoints
+- [x] Byte/outcome comparison with actionable diffs
+- [x] Reports: `report.json`, `report.md`, `junit.xml` under `reports/<id>/`
+- [x] Failure log retention (`native.log` / `python.log`)
+- [x] `make interop` (optional `FIXTURE=basic-db`) and CI `interop` job
+- [x] Deliberate mismatch unit test for diagnostics
 
-### Open items (follow-up / M4)
+### Open items (follow-up / M5)
 
 - [ ] AddressSanitizer / UndefinedBehaviorSanitizer CI jobs for native adapter
-- [ ] `make interop` dual-server equivalence runner + reports (M4)
+- [ ] Expand fixture matrix (M5)
 
 ## 1. Delivery strategy
 
@@ -252,7 +254,7 @@ Expose the same compiled DB fixture through an independent pure-Python implement
 
 ## Milestone 4 — Interoperability runner
 
-Status: **not started** (next)
+Status: **complete** (2026-07-17)
 
 ### Goal
 
@@ -260,32 +262,34 @@ Make cross-server comparison a single local command and CI gate.
 
 ### Work
 
-1. Implement `interop-probe`.
-2. Define normalized outcomes:
+1. [x] Implement `interop-probe`.
+2. [x] Define normalized outcomes:
    - success;
    - address-out-of-range;
    - write-protected;
    - unsupported;
    - transport-failure;
    - protocol-failure.
-3. Add bounded readiness handling.
-4. Execute fixture expectations against one endpoint.
-5. Execute the same sequence against both endpoints.
-6. Compare returned bytes and normalized outcomes.
-7. Compare expected final state.
-8. Emit JSON, Markdown and JUnit reports.
-9. Retain logs and snapshots on failure.
-10. Add `make interop` and fixture selection.
-11. Add a deliberate mismatch test to prove diagnostics.
+3. [x] Add bounded readiness handling.
+4. [x] Execute fixture expectations against one endpoint.
+5. [x] Execute the same sequence against both endpoints.
+6. [x] Compare returned bytes and normalized outcomes.
+7. [x] Compare expected final state.
+8. [x] Emit JSON, Markdown and JUnit reports.
+9. [x] Retain logs and snapshots on failure.
+10. [x] Add `make interop` and fixture selection.
+11. [x] Add a deliberate mismatch test to prove diagnostics.
 
 ### Exit criteria
 
-- One command builds, starts, probes, compares, reports and tears down.
-- Byte mismatches show area, offset, expected bytes and actual bytes.
-- Unsupported capabilities are visible skips.
-- Unexpected divergence fails CI.
+- [x] One command builds, starts, probes, compares, reports and tears down.
+- [x] Byte mismatches show area, offset, expected bytes and actual bytes.
+- [x] Unsupported capabilities are visible skips.
+- [x] Unexpected divergence fails CI.
 
 ## Milestone 5 — Fixture matrix expansion
+
+Status: **not started** (next)
 
 ### Goal
 

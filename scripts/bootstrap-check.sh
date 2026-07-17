@@ -65,6 +65,9 @@ require_file fixtures/schema/fixture.schema.json
 require_file go.mod
 require_file tooling/fixturectl/main.go
 require_file tooling/interop-probe/main.go
+require_file internal/interop/runner.go
+require_file internal/s7client/client.go
+require_file scripts/interop-run.sh
 require_file servers/native/src/main.cpp
 require_file servers/native/CMakeLists.txt
 require_file servers/python/snap_interop_server/main.py
