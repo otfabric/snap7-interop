@@ -1,12 +1,16 @@
 # go-s7comm API coverage map
 
-Target client API: [`otfabric/go-s7comm` API.md](https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md)
+Target client API:
+[`otfabric/go-s7comm` API.md](https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md)
 (branch `refactor/cotp-tp0-service`).
 
 This maps public client primitives to `snap-interop` fixtures. Fixtures gate
-black-box behavior of the two servers; `go-s7comm` remains a downstream consumer (M7).
+black-box behavior of the two servers. Wiring pinned GHCR images into
+`go-s7comm` CI is listed under [README open TODOs](../README.md#open-todos).
 
-## Read/write primitives (M5 focus)
+Fixture catalog: [README.md § Fixture catalog](../README.md#fixture-catalog).
+
+## Covered read/write primitives
 
 | Client API | Area | Fixture(s) | Status |
 | --- | --- | --- | --- |
@@ -20,23 +24,32 @@ black-box behavior of the two servers; `go-s7comm` remains a downstream consumer
 | Unaligned byte ranges | DB | `unaligned-range` | covered |
 | Last valid byte | DB | `last-valid-byte` | covered |
 | Out-of-range read/write | DB | `out-of-range` | covered |
-| Rejected write (read-only) | DB | `read-only-reject` | covered (reject as `address-out-of-range`; see compatibility.md) |
-| Large read / PDU chunking | DB | `large-read` | covered (within negotiated PDU) |
+| Rejected write (read-only) | DB | `read-only-reject` | covered (normalized `address-out-of-range`; see [compatibility.md](compatibility.md)) |
+| Large read within PDU | DB | `large-read` | covered |
 | Concurrent readers | DB | `concurrent-reads` | covered |
 | Reconnect + preserved state | DB | `reconnect-state` | covered |
 
-## Deferred / not fixture-gated in M5
+All rows above pass `make interop` on both pinned server images.
 
-| Client API | Reason |
-| --- | --- |
-| `ProbeReadableRanges` | Client-side scan over ReadArea; servers covered by OOR + span fixtures |
-| `CompareRead` | Client multi-session orchestration |
-| `Discover` / `ProbeRackSlots` | Network topology; not server memory contract |
-| `Identify` / `GetCPUState` / SZL / diag | Characterize both servers before freezing (PLAN §5) |
-| `ListBlocks` / `UploadBlock` | Outside initial memory interop scope |
-| Timers / counters (`AreaTimer` / `AreaCounter`) | Deferred until equivalent semantics confirmed |
+## Not fixture-gated here (client or deferred)
 
-## Minimum acceptance
+| Client API / topic | Status | Reason |
+| --- | --- | --- |
+| `ProbeReadableRanges` | client-side | Scan over `ReadArea`; servers covered by OOR + span fixtures |
+| `CompareRead` | client-side | Multi-session orchestration in the client |
+| `Discover` / `ProbeRackSlots` | out of server memory scope | Network topology, not fixture memory contract |
+| `Identify` / `GetCPUState` / SZL / diag | **deferred** | Characterize both servers before freezing expectations |
+| `ListBlocks` / `UploadBlock` | **deferred** | Outside initial memory interop scope |
+| Timers / counters (`AreaTimer` / `AreaCounter`) | **deferred** | Need equivalent semantics on both adapters |
+| Multi-PDU chunking of spans larger than PDU | client-side (M7) | `large-read` is a large *single* request; chunking is go-s7comm `ReadArea` |
 
-M5 exit: ≥10 fixtures pass on both implementations, and every row in the
-read/write primitives table above has a matching fixture.
+## Recommended go-s7comm subsets
+
+**PR / fast gate**
+
+- `basic-db`, `typed-values`, `write-cycle`, `last-valid-byte`, `concurrent-reads`
+
+**Nightly / release**
+
+- Full canonical matrix under `fixtures/canonical/`
+- Prefer image digest pins from GHCR over moving tags

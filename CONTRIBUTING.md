@@ -4,16 +4,15 @@ Thank you for your interest in contributing.
 
 ## Before you change code
 
-1. Read [README.md](README.md), [REQUIREMENTS.md](REQUIREMENTS.md),
-   [PLAN.md](PLAN.md) and the ADRs under [docs/adr/](docs/adr/).
-2. Treat `REQUIREMENTS.md` as normative.
-3. Prefer a small complete vertical slice over broad scaffolding.
-4. Keep fixture fields implementation-neutral.
-5. Encode typed values only in the canonical compiler.
-6. Never silently ignore unsupported behavior.
-7. Pin every external dependency.
-8. Preserve native/Python protocol independence.
-9. Do not add `go-s7comm` as a server dependency.
+1. Read [README.md](README.md) (scope, fixture catalog, out-of-scope, open TODOs)
+   and ADRs under [docs/adr/](docs/adr/).
+2. Prefer a small complete vertical slice over broad scaffolding.
+3. Keep fixture fields implementation-neutral.
+4. Encode typed values only in the canonical compiler.
+5. Never silently ignore unsupported behavior — use capabilities / skips.
+6. Pin every external dependency (`versions.yaml`, Docker digests, Python pins).
+7. Preserve native/Python protocol independence.
+8. Do not add `go-s7comm` as a server dependency.
 
 ## Development commands
 
@@ -23,27 +22,62 @@ make fmt
 make lint
 make test
 make ci
+make images
+make interop
+make sbom
+make scan
 ```
 
-All CI targets are non-interactive. Run `make ci` before declaring work complete.
+All CI targets are non-interactive. Run `make ci` (and `make interop` for
+server/behavior changes) before declaring work complete.
 
 ## Fixtures
 
-- Source fixtures live under `fixtures/canonical/` and `fixtures/invalid/`.
-- Compiled golden outputs live under `fixtures/compiled/`.
-- Update golden files only through the explicit `make fixtures-update` target
-  (once the compiler exists).
+- Catalog and scope: [README.md § Fixture catalog](README.md#fixture-catalog).
+- Source: `fixtures/canonical/` and `fixtures/invalid/`.
+- Compiled goldens: `fixtures/compiled/` — update **only** via
+  `make fixtures-update`.
+- After adding or changing a canonical fixture:
+  1. `make fixtures-update && make fixtures-check`
+  2. `FIXTURE=<id> make interop`
+  3. Update the README catalog + [docs/go-s7comm-coverage.md](docs/go-s7comm-coverage.md)
+  4. Record differences in [docs/compatibility.md](docs/compatibility.md)
 - Invalid fixtures must produce stable diagnostics with stable error codes.
+
+## Scope changes
+
+If you expand coverage into a deferred area (see [Open TODOs](README.md#open-todos)):
+
+1. Characterize **both** adapters first.
+2. Document findings in `docs/compatibility.md`.
+3. Extend schema / capabilities only after semantics agree.
+4. Update README “What you can test”, “Out of scope”, and “Open TODOs”.
 
 ## Pull requests
 
 1. Open an issue or pick an existing one when the change is non-trivial.
-2. Keep PRs aligned with the recommended sequence in `PLAN.md`.
-3. Add or update tests for every semantic change.
-4. Update `PLAN.md` status when a milestone item is completed or blocked.
-5. Document upstream limitations in `docs/compatibility.md`.
-6. Do not weaken a normative requirement without updating `REQUIREMENTS.md`
-   and recording an ADR.
+2. Add or update tests for every semantic change.
+3. Keep README TODOs / fixture catalog accurate when closing or opening work.
+
+## Publishing images
+
+Maintainers with GHCR `write:packages`:
+
+```sh
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u USERNAME --password-stdin
+make publish
+```
+
+Set package visibility to **Public** for anonymous pulls. Prefer digest pins
+downstream. See README “Published images”.
+
+## Releases
+
+1. Move notes from **Unreleased** into a new `## vX.Y.Z` section in
+   [RELEASE.md](RELEASE.md) (Summary, Breaking changes, pins if relevant).
+2. Bump `snap_interop` in `versions.yaml` (and README badge / pull examples).
+3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` publishes GHCR images
+   and attaches release artifacts.
 
 ## Security
 

@@ -1,0 +1,91 @@
+name: Upstream candidates
+run-name: "Candidate upstream probe by @${{ github.actor }}"
+
+# Exercises newer upstreams without mutating release pins in versions.yaml.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GOWORK: "off"
+
+jobs:
+  candidate-python-snap7:
+    name: python-snap7-latest
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve latest python-snap7 on PyPI
+        id: pypi
+        run: |
+          ver="$(python3 - <<'PY'
+          import json, urllib.request
+          data = json.load(urllib.request.urlopen("https://pypi.org/pypi/python-snap7/json"))
+          print(data["info"]["version"])
+          PY
+          )"
+          echo "version=${ver}" >> "$GITHUB_OUTPUT"
+          echo "candidate python-snap7==${ver}"
+
+      - name: Build python image with candidate pin
+        run: |
+          cp servers/python/requirements.txt /tmp/requirements.release
+          echo "python-snap7==${{ steps.pypi.outputs.version }}" > servers/python/requirements.txt
+          docker build -f servers/python/Dockerfile -t snap-interop-python:candidate .
+          mv /tmp/requirements.release servers/python/requirements.txt
+
+      - name: Record candidate result
+        if: always()
+        run: |
+          mkdir -p dist/candidate
+          {
+            echo "python-snap7_candidate=${{ steps.pypi.outputs.version }}"
+            echo "release_pin=3.0.0"
+            echo "NOTE: release pins in versions.yaml were not modified"
+          } > dist/candidate/python.txt
+
+  candidate-snap7-tip:
+    name: snap7-default-branch
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Resolve SCADACS/snap7 HEAD
+        id: tip
+        run: |
+          sha="$(git ls-remote https://github.com/SCADACS/snap7.git HEAD | awk '{print $1}')"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "candidate snap7=${sha}"
+
+      - name: Build native image with candidate revision
+        run: |
+          docker build --platform=linux/amd64 \
+            -f servers/native/Dockerfile \
+            --build-arg "SNAP7_REVISION=${{ steps.tip.outputs.sha }}" \
+            -t snap-interop-native:candidate \
+            .
+
+      - name: Record candidate result
+        if: always()
+        run: |
+          mkdir -p dist/candidate
+          {
+            echo "snap7_candidate=${{ steps.tip.outputs.sha }}"
+            echo "release_pin=f6ff90317ca5d54250f4dcd29209689a74e26d82"
+            echo "NOTE: release pins in versions.yaml were not modified"
+          } > dist/candidate/native.txt

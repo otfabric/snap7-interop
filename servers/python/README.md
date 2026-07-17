@@ -1,6 +1,12 @@
 # snap-interop Python server
 
-Pure-Python S7 server adapter built on pinned `python-snap7`.
+Pure-Python S7 server adapter built on pinned `python-snap7==3.0.0`.
+
+Published image: `ghcr.io/otfabric/snap-interop-python`.
+
+Scope, fixture catalog, and out-of-scope topics:
+[repository README](../../README.md). Compatibility notes:
+[docs/compatibility.md](../../docs/compatibility.md).
 
 ## Contract
 
@@ -14,10 +20,15 @@ SNAP_INTEROP_LOG_FORMAT
 SNAP_INTEROP_STATE_PATH
 ```
 
-Upstream API usage is isolated in `snap_interop_server.adapter.Snap7ServerAdapter`.
-The image must not load the native Snap7 shared library (enforced at build and in tests).
+Upstream calls are isolated in `snap_interop_server.adapter` /
+`snap_interop_server.server.InteropServer` (OOR, bit mask, read-only reject).
+
+The image must not load the native Snap7 shared library (enforced at image build
+and in `tests/test_no_native_lib.py`).
 
 ## Local checks
+
+From `servers/python/` (or via root `make python-test`):
 
 ```bash
 python -m venv .venv

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Validate Milestone 0 repository bootstrap contracts.
+# Validate repository bootstrap contracts.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,10 +34,9 @@ require_dir() {
 
 echo "==> checking required documents and meta files"
 require_file README.md
-require_file REQUIREMENTS.md
-require_file PLAN.md
 require_file LICENSE
 require_file SECURITY.md
+require_file THIRD_PARTY_NOTICES.md
 require_file CONTRIBUTING.md
 require_file CODEOWNERS
 require_file .editorconfig
@@ -45,6 +44,13 @@ require_file .gitignore
 require_file Makefile
 require_file compose.yaml
 require_file versions.yaml
+require_file servers/native/snap7/aarch64_linux.mk
+require_file scripts/sbom.sh
+require_file scripts/scan.sh
+require_file scripts/check-notices.sh
+require_file scripts/publish.sh
+require_file .github/workflows/release.yml
+require_file .github/workflows/candidate.yml
 
 echo "==> checking directory skeleton"
 require_dir fixtures/schema
@@ -85,6 +91,10 @@ do
   require_file "${adr}"
 done
 require_file docs/compatibility.md
+require_file docs/go-s7comm-coverage.md
+require_file docs/README.md
+require_file servers/native/README.md
+require_file servers/python/README.md
 
 echo "==> checking versions.yaml upstream pins"
 if grep -Eq 'revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"' versions.yaml; then
@@ -118,7 +128,7 @@ else
   fail "need PyYAML (python3) or Ruby stdlib YAML to parse versions.yaml/compose.yaml"
 fi
 
-echo "==> checking placeholder Dockerfiles exist"
+echo "==> checking Dockerfiles exist"
 require_file servers/native/Dockerfile
 require_file servers/python/Dockerfile
 
@@ -129,11 +139,11 @@ else
   fail "compose.yaml must define native and python services"
 fi
 
-echo "==> checking PLAN.md status section"
-if grep -Eq '^## Status' PLAN.md; then
-  ok "PLAN.md has Status section"
+echo "==> checking README open TODOs section"
+if grep -Eq '^## Open TODOs' README.md; then
+  ok "README.md has Open TODOs section"
 else
-  fail "PLAN.md must track implementation status"
+  fail "README.md must list open TODOs"
 fi
 
 if [[ "${failures}" -ne 0 ]]; then

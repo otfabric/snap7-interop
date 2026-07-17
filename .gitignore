@@ -25,6 +25,7 @@ coverage.out
 coverage.html
 cover.*
 *.test
+**/testdata/fuzz/
 
 # CMake / native builds
 servers/native/build/

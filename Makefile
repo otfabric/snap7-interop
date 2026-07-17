@@ -22,8 +22,8 @@ PYTHON_DIR := servers/python
 
 .PHONY: help fmt lint test ci bootstrap-check build fixturectl probe-bin \
 	fixtures fixtures-check fixtures-update \
-	native python images up down probe smoke-native smoke-python \
-	python-test _smoke-run interop report sbom scan
+	native python images publish up down probe smoke-native smoke-python \
+	python-test _smoke-run interop report sbom scan notices fuzz
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -39,7 +39,9 @@ fmt: ## Format Go and other available trees
 
 lint: ## Lint bootstrap contracts, shell scripts and Go packages
 	@echo "Running bootstrap-check"
+	@chmod +x scripts/bootstrap-check.sh scripts/check-notices.sh scripts/sbom.sh scripts/scan.sh scripts/publish.sh
 	@./scripts/bootstrap-check.sh
+	@./scripts/check-notices.sh
 	@if command -v shellcheck >/dev/null 2>&1; then \
 		echo "Running shellcheck"; \
 		shellcheck scripts/*.sh; \
@@ -80,7 +82,7 @@ python-test: ## Run Python adapter unit tests in an isolated venv
 	@cd $(PYTHON_DIR) && .venv/bin/mypy
 	@cd $(PYTHON_DIR) && .venv/bin/pytest
 
-bootstrap-check: ## Validate Milestone 0 repository skeleton
+bootstrap-check: ## Validate repository skeleton and required docs
 	@./scripts/bootstrap-check.sh
 
 build: fixturectl probe-bin ## Build tooling binaries
@@ -133,18 +135,27 @@ fixtures-update: fixturectl ## Explicitly regenerate compiled golden fixtures
 
 
 
-native: ## Build native Snap7 server image (linux/amd64)
-	@$(DOCKER) build --platform=linux/amd64 \
+# BUILD_PLATFORM selects image arch (linux/amd64 or linux/arm64).
+BUILD_PLATFORM ?= linux/amd64
+
+native: ## Build native Snap7 server image (BUILD_PLATFORM=linux/amd64|linux/arm64)
+	@$(DOCKER) build --platform=$(BUILD_PLATFORM) \
 		-f servers/native/Dockerfile \
 		-t $(NATIVE_IMAGE) .
 
-python: ## Build pure-Python server image
-	@$(DOCKER) build \
+python: ## Build pure-Python server image (BUILD_PLATFORM optional override)
+	@$(DOCKER) build --platform=$(BUILD_PLATFORM) \
 		-f servers/python/Dockerfile \
 		-t $(PYTHON_IMAGE) .
 
 images: native python ## Build both server images
 	@echo "images: native and python built"
+
+# IMAGE_TAG defaults to versions.yaml snap_interop (e.g. 0.1.0 → tags v0.1.0 and 0.1.0).
+# Requires: docker login ghcr.io (write:packages). Public package visibility set in GHCR UI.
+publish: ## Multi-arch build + push both images to ghcr.io/otfabric
+	@chmod +x scripts/publish.sh
+	@./scripts/publish.sh
 
 up: ## Start both compose server profiles
 	@docker compose --profile native --profile python up -d --build
@@ -157,13 +168,13 @@ probe: probe-bin ## Smoke-probe an S7 server (PROBE_ADDR, default localhost:1102
 	@$(PROBE) -addr $(PROBE_ADDR) -db 1 -offset 8 -length 4 -write-hex deadbeef
 
 smoke-native: native probe-bin ## Build native image, run it, probe read/write, tear down
-	@$(MAKE) _smoke-run IMAGE=$(NATIVE_IMAGE) HOST_PORT=1102 PLATFORM=--platform=linux/amd64 LABEL=native
+	@$(MAKE) _smoke-run IMAGE=$(NATIVE_IMAGE) HOST_PORT=1102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=native
 
 smoke-python: python probe-bin ## Build Python image, run it, probe read/write, tear down
-	@$(MAKE) _smoke-run IMAGE=$(PYTHON_IMAGE) HOST_PORT=2102 PLATFORM= LABEL=python
+	@$(MAKE) _smoke-run IMAGE=$(PYTHON_IMAGE) HOST_PORT=2102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=python
 
 _smoke-run:
-	@cid=$$($(DOCKER) run -d --rm $(PLATFORM) \
+	@cid=$$($(DOCKER) run -d --rm $(RUN_PLATFORM) \
 		-p $(HOST_PORT):102 \
 		-v "$(CURDIR)/fixtures/compiled:/fixtures:ro" \
 		--read-only \
@@ -199,8 +210,18 @@ interop: ## Build both images, compare fixtures, write reports/ (FIXTURE=id opti
 report: ## Show latest interop markdown reports
 	@ls -1 reports/*/report.md 2>/dev/null || echo "no reports yet; run make interop"
 
-sbom: ## Generate SBOMs (Milestone 6)
-	@echo "sbom: not implemented until Milestone 6"; exit 1
+notices: ## Verify THIRD_PARTY_NOTICES.md and digest pins
+	@chmod +x scripts/check-notices.sh
+	@./scripts/check-notices.sh
 
-scan: ## Vulnerability scan (Milestone 6)
-	@echo "scan: not implemented until Milestone 6"; exit 1
+fuzz: ## Short fixture parser/compiler fuzz smoke
+	@$(GO) test ./internal/fixture/ -fuzz=FuzzValidate -fuzztime=20s
+	@$(GO) test ./internal/fixture/ -fuzz=FuzzCompile -fuzztime=10s
+
+sbom: ## Generate SPDX + CycloneDX SBOMs under dist/sbom/
+	@chmod +x scripts/sbom.sh
+	@./scripts/sbom.sh
+
+scan: ## Trivy scan local images (SCAN_SEVERITY=CRITICAL,HIGH)
+	@chmod +x scripts/scan.sh
+	@./scripts/scan.sh

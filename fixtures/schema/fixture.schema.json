@@ -2,75 +2,122 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/otfabric/snap-interop/fixtures/schema/fixture.schema.json",
   "title": "snap-interop source fixture",
-  "description": "Implementation-neutral source fixture. Typed values are encoded only by the canonical compiler.",
+  "description": "Implementation-neutral source fixture for snap-interop dual servers.\n\nAuthoring rules:\n- Declare only observable memory and black-box expectations; never encode adapter-specific quirks.\n- Typed scalars go in area.values; the canonical compiler encodes them to bytes. Adapters must not re-interpret types.\n- List every needed capability in requires so unsupported servers skip explicitly instead of silently downgrading.\n- Prefer hex payloads in expectations for stable goldens.\n- Document classified differences in notes and docs/compatibility.md, not by weakening expectations.\n\nWorkflow: author under fixtures/canonical/, then make fixtures-update && make fixtures-check, then FIXTURE=<id> make interop.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "id", "description", "server", "areas"],
   "properties": {
     "$schema": {
-      "type": "string"
+      "type": "string",
+      "description": "Optional pointer to this schema (relative or absolute URI). Editors use it for validation and completion.",
+      "examples": ["../schema/fixture.schema.json"]
     },
     "schemaVersion": {
       "type": "string",
-      "const": "1.0.0"
+      "const": "1.0.0",
+      "description": "Source fixture schema version. Must match the compiler's supported schema (currently 1.0.0)."
     },
     "id": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Stable kebab-case fixture identifier. Becomes the filename stem (fixtures/canonical/<id>.json) and report directory name.",
+      "examples": ["basic-db", "read-only-reject", "concurrent-reads"]
     },
     "description": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "One-line human summary of what this fixture proves. Shown in catalogs, compiled metadata, and interop reports.",
+      "examples": ["Single zero-filled DB1 with a short hex prefix for smoke reads"]
     },
     "revision": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 1,
+      "description": "Monotonic fixture content revision. Bump when semantics of this id change in a way consumers should notice (not for typo-only edits)."
     },
     "tags": {
       "type": "array",
+      "description": "Optional free-form labels for filtering and docs (e.g. db, smoke, go-s7comm). Not enforced by the compiler.",
       "items": {
         "type": "string",
         "minLength": 1
       },
-      "uniqueItems": true
+      "uniqueItems": true,
+      "examples": [["db", "smoke", "read"]]
     },
     "requires": {
       "type": "array",
+      "description": "Capability tokens the server must advertise. Missing capabilities cause an explicit skip, never a silent pass.\n\nKnown tokens:\n- area.db, area.markers, area.inputs, area.outputs\n- operation.read, operation.write, operation.bit\n- operation.concurrent-read, operation.reconnect\n- access.read-only-enforce\n\nSee docs/compatibility.md for the shared capability matrix.",
       "items": {
         "type": "string",
-        "minLength": 1
+        "minLength": 1,
+        "description": "Capability token (dot-separated).",
+        "examples": ["area.db", "operation.read", "access.read-only-enforce"]
       },
       "uniqueItems": true
     },
     "references": {
       "type": "array",
+      "description": "Optional links or issue/ADR identifiers that motivated this fixture (URLs, ADR numbers, ticket ids).",
       "items": {
         "type": "string",
         "minLength": 1
       }
     },
     "notes": {
-      "type": "string"
+      "type": "string",
+      "description": "Longer author notes: classified differences, upstream constraints, or why an expectation uses a particular normalized outcome. Prefer this over encoding assumptions into the schema."
     },
     "server": {
-      "$ref": "#/$defs/server"
+      "$ref": "#/$defs/server",
+      "description": "Logical S7 endpoint settings applied when the server loads the compiled fixture (rack/slot/PDU). Not a full PLC identity model."
     },
     "areas": {
       "type": "array",
       "minItems": 1,
+      "description": "Memory areas registered by both adapters. Each area is zero-filled to size, then initial (prefix) and values (typed patches) are applied. DB areas require number; markers/inputs/outputs must omit number.",
       "items": {
         "$ref": "#/$defs/area"
       }
     },
     "expectations": {
       "type": "array",
+      "description": "Ordered black-box checks executed by the interop probe against both servers. Each step is independent of adapter internals; results use normalized outcomes or expected byte payloads.",
       "items": {
         "$ref": "#/$defs/expectation"
       }
     }
   },
+  "examples": [
+    {
+      "schemaVersion": "1.0.0",
+      "id": "basic-db",
+      "description": "Single zero-filled DB1 with a short hex prefix for smoke reads",
+      "requires": ["area.db", "operation.read"],
+      "server": { "rack": 0, "slot": 2, "pduSize": 480 },
+      "areas": [
+        {
+          "type": "db",
+          "number": 1,
+          "size": 64,
+          "access": "read-write",
+          "initial": { "hex": "0102030405060708" }
+        }
+      ],
+      "expectations": [
+        {
+          "operation": "read",
+          "area": { "type": "db", "number": 1 },
+          "offset": 0,
+          "length": 8,
+          "result": { "hex": "0102030405060708" }
+        }
+      ]
+    }
+  ],
   "$defs": {
     "server": {
+      "title": "Server settings",
+      "description": "Connection/setup parameters for the fixture's logical PLC endpoint. Both adapters honor rack, slot, and pduSize when advertising/negotiating the session.",
       "type": "object",
       "additionalProperties": false,
       "required": ["rack", "slot"],
@@ -78,61 +125,84 @@
         "rack": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 7
+          "maximum": 7,
+          "description": "S7 rack number used by clients when connecting (classic addressing)."
         },
         "slot": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 31
+          "maximum": 31,
+          "description": "S7 slot number used by clients when connecting (classic addressing)."
         },
         "pduSize": {
           "type": "integer",
           "minimum": 240,
-          "maximum": 960
+          "maximum": 960,
+          "description": "Desired negotiated PDU size in bytes. Large single-request fixtures (e.g. large-read) must stay within this limit; multi-PDU client chunking is out of scope for the servers.",
+          "examples": [480]
         },
         "cpuState": {
           "type": "string",
-          "enum": ["run", "stop", "unknown"]
+          "enum": ["run", "stop", "unknown"],
+          "description": "Optional declared CPU state for future Identify/diagnostics fixtures. Currently deferred — do not rely on adapters enforcing this yet."
         },
         "identity": {
           "type": "object",
+          "description": "Optional identity fields for future Identify/SZL fixtures. Currently deferred — not part of the interop pass/fail matrix.",
           "additionalProperties": false,
           "properties": {
-            "orderCode": { "type": "string" },
-            "serialNumber": { "type": "string" },
-            "moduleName": { "type": "string" }
+            "orderCode": {
+              "type": "string",
+              "description": "Declared order code / MLFB string (informational until Identify is fixture-gated)."
+            },
+            "serialNumber": {
+              "type": "string",
+              "description": "Declared serial number (informational until Identify is fixture-gated)."
+            },
+            "moduleName": {
+              "type": "string",
+              "description": "Declared module name (informational until Identify is fixture-gated)."
+            }
           }
         }
       }
     },
     "area": {
+      "title": "Memory area",
+      "description": "One registered memory region. Size is the exclusive upper bound for offsets (bytes). Remaining bytes after initial/values stay zero.",
       "type": "object",
       "additionalProperties": false,
       "required": ["type", "size", "access"],
       "properties": {
         "type": {
           "type": "string",
+          "description": "Memory area kind.\n- db: data block (requires number)\n- markers: Merkers / flags (M)\n- inputs: process inputs (I)\n- outputs: process outputs (Q)",
           "enum": ["db", "markers", "inputs", "outputs"]
         },
         "number": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 65535
+          "maximum": 65535,
+          "description": "DB number. Required when type is db; must be omitted for markers, inputs, and outputs."
         },
         "size": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 1048576
+          "maximum": 1048576,
+          "description": "Area size in bytes (1..1MiB). Initializers and patches must fit; out-of-range client ops are tested via expectations, not by oversized initial data."
         },
         "access": {
           "type": "string",
+          "description": "Access policy for the registered area.\n- read-write: reads and writes allowed\n- read-only: writes must be rejected; with access.read-only-enforce, both adapters currently normalize the reject to address-out-of-range (Snap7 item 0x0A), not write-protected",
           "enum": ["read-write", "read-only"]
         },
         "initial": {
-          "$ref": "#/$defs/bulkInitializer"
+          "$ref": "#/$defs/bulkInitializer",
+          "description": "Optional bulk byte initializer applied at offset 0 before typed values. Default fill is zeros for the full size."
         },
         "values": {
           "type": "array",
+          "description": "Optional typed scalar patches. Encoded by the compiler into big-endian (or declared byteOrder) bytes; adapters only see the resulting buffer.",
           "items": {
             "$ref": "#/$defs/valuePatch"
           }
@@ -156,18 +226,24 @@
       ]
     },
     "bulkInitializer": {
+      "title": "Bulk byte initializer",
+      "description": "Raw bytes written at the start of an area (offset 0). Exactly one of hex, base64, or bytes. Length must not exceed the area size. Prefer hex for readable goldens.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "hex": {
           "type": "string",
-          "pattern": "^(?:[0-9a-fA-F]{2})*$"
+          "pattern": "^(?:[0-9a-fA-F]{2})*$",
+          "description": "Even-length hex string (two chars per byte), case-insensitive. Preferred form in canonical fixtures.",
+          "examples": ["0102030405060708", "cafebabe"]
         },
         "base64": {
-          "type": "string"
+          "type": "string",
+          "description": "Standard base64 encoding of the byte prefix."
         },
         "bytes": {
           "type": "array",
+          "description": "Explicit byte list (0..255). Useful for tiny patches; prefer hex for longer sequences.",
           "items": {
             "type": "integer",
             "minimum": 0,
@@ -176,7 +252,8 @@
         },
         "replace": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "When true, overlapping later initializers/patches may replace this span. Default false: overlapping patches without replace fail validation."
         }
       },
       "oneOf": [
@@ -186,21 +263,26 @@
       ]
     },
     "valuePatch": {
+      "title": "Typed value patch",
+      "description": "Compiler-encoded typed write into an area. Use for int/float/bool/ascii; do not hand-encode multi-byte scalars as hex unless testing raw byte patterns.",
       "type": "object",
       "additionalProperties": false,
       "required": ["offset", "dataType", "value"],
       "properties": {
         "offset": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Byte offset within the area where the encoded value starts (inclusive)."
         },
         "bit": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 7
+          "maximum": 7,
+          "description": "Bit index within the byte at offset (0 = LSB … 7 = MSB). Required for dataType bool."
         },
         "dataType": {
           "type": "string",
+          "description": "Scalar type encoded by the compiler.\n- bool: needs bit; value is boolean\n- int8/uint8 … int64/uint64: numeric value; multi-byte types need byteOrder\n- float32/float64: IEEE-754; need byteOrder\n- bytes: raw byte array or hex-like content with length\n- ascii: string; length is byte count (padding/truncation per compiler rules)",
           "enum": [
             "bool",
             "int8",
@@ -219,50 +301,64 @@
         },
         "byteOrder": {
           "type": "string",
-          "enum": ["big-endian", "little-endian"]
+          "enum": ["big-endian", "little-endian"],
+          "description": "Endianness for multi-byte numeric and float types. Classic S7 data is big-endian; prefer big-endian unless the fixture intentionally tests LE."
         },
         "length": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "Byte length for dataType bytes or ascii. Ignored for fixed-width numeric/float/bool types."
         },
         "value": {
-          "type": ["boolean", "number", "string", "array"]
+          "type": ["boolean", "number", "string", "array"],
+          "description": "Literal value matching dataType (boolean for bool, number for integers/floats, string for ascii, array of 0..255 for bytes)."
         },
         "replace": {
           "type": "boolean",
-          "default": false
+          "default": false,
+          "description": "When true, this patch may overwrite an overlapping earlier patch. Default false rejects accidental overlaps."
         }
       }
     },
     "areaRef": {
+      "title": "Area reference",
+      "description": "Points at a registered area for an expectation. For type db, number is required and must match an areas[] entry.",
       "type": "object",
       "additionalProperties": false,
       "required": ["type"],
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["db", "markers", "inputs", "outputs"]
+          "enum": ["db", "markers", "inputs", "outputs"],
+          "description": "Target area kind (must exist in areas)."
         },
         "number": {
           "type": "integer",
           "minimum": 1,
-          "maximum": 65535
+          "maximum": 65535,
+          "description": "DB number when type is db."
         }
       }
     },
     "bytePayload": {
+      "title": "Byte payload",
+      "description": "Opaque byte sequence for write data or expected read results. Exactly one of hex, base64, or bytes. Prefer hex in canonical fixtures.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "hex": {
           "type": "string",
-          "pattern": "^(?:[0-9a-fA-F]{2})*$"
+          "pattern": "^(?:[0-9a-fA-F]{2})*$",
+          "description": "Even-length hex string (two chars per byte).",
+          "examples": ["deadbeef", "01020304"]
         },
         "base64": {
-          "type": "string"
+          "type": "string",
+          "description": "Standard base64 encoding of the payload."
         },
         "bytes": {
           "type": "array",
+          "description": "Explicit byte list (0..255).",
           "items": {
             "type": "integer",
             "minimum": 0,
@@ -276,13 +372,30 @@
         { "required": ["bytes"] }
       ]
     },
+    "normalizedOutcome": {
+      "title": "Normalized probe outcome",
+      "description": "Adapter-independent result token used when the expectation is about success/failure class rather than exact bytes.\n\nNotes:\n- success / accepted: operation completed as expected (reads often use byte payloads instead)\n- address-out-of-range: span outside registered area, or current RO-reject surface (item 0x0A)\n- write-protected: schema-ready for item 0x03; stock Snap7 ResourceLess RO rejects currently map to address-out-of-range — see docs/compatibility.md\n- unsupported / transport-failure / protocol-failure: reserved normalized classes for skips and hard failures",
+      "type": "string",
+      "enum": [
+        "accepted",
+        "success",
+        "address-out-of-range",
+        "write-protected",
+        "unsupported",
+        "transport-failure",
+        "protocol-failure"
+      ]
+    },
     "expectation": {
+      "title": "Black-box expectation",
+      "description": "One probe step. Fields used depend on operation:\n- read / concurrent-read: offset + length (+ clients for concurrent-read); result is bytes or outcome\n- write: offset + data; result usually accepted\n- rejected-read / rejected-write: expect a normalized failure outcome\n- final-state: read-back check after prior mutations\n- reconnect: drop/reopen client session; result usually success; follow with read to prove preserved memory\n- bit ops: set bit on read/write when testing single-bit access",
       "type": "object",
       "additionalProperties": false,
       "required": ["operation", "area"],
       "properties": {
         "operation": {
           "type": "string",
+          "description": "Probe operation kind.\n- read: byte (or bit) read; compare to result\n- write: byte (or bit) write; result usually accepted\n- rejected-read: read must fail with normalized outcome\n- rejected-write: write must fail with normalized outcome\n- final-state: assert memory after earlier steps\n- reconnect: reconnect client; server memory must remain\n- concurrent-read: N clients read the same span and agree",
           "enum": [
             "read",
             "write",
@@ -297,40 +410,37 @@
           "type": "integer",
           "minimum": 2,
           "maximum": 32,
-          "description": "For concurrent-read: number of simultaneous clients"
+          "description": "For concurrent-read only: number of simultaneous clients that must observe identical bytes."
         },
         "area": {
-          "$ref": "#/$defs/areaRef"
+          "$ref": "#/$defs/areaRef",
+          "description": "Area under test for this step."
         },
         "offset": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Starting byte offset within the area (inclusive). Required for most memory operations."
         },
         "bit": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 7
+          "maximum": 7,
+          "description": "Optional bit index for bit-oriented read/write expectations (0 = LSB … 7 = MSB)."
         },
         "length": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "Byte length to read (or bit-read span semantics as implemented by the probe). Required for read-like operations."
         },
         "data": {
-          "$ref": "#/$defs/bytePayload"
+          "$ref": "#/$defs/bytePayload",
+          "description": "Payload for write / rejected-write. For bit writes, typically a single-byte marker such as hex 01 meaning set the bit."
         },
         "result": {
+          "description": "Expected outcome: either a normalizedOutcome string or a bytePayload for successful reads / final-state checks.",
           "oneOf": [
             {
-              "type": "string",
-              "enum": [
-                "accepted",
-                "success",
-                "address-out-of-range",
-                "write-protected",
-                "unsupported",
-                "transport-failure",
-                "protocol-failure"
-              ]
+              "$ref": "#/$defs/normalizedOutcome"
             },
             {
               "$ref": "#/$defs/bytePayload"

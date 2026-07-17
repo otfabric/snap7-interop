@@ -35,3 +35,6 @@ use normalized categories plus returned bytes.
 - Mapping tables live in adapters/probe code and must be tested.
 - Informational differences that do not affect bytes or category are not
   failures.
+- Some upstream surfaces cannot emit every category distinctly (for example
+  Snap7 ResourceLess read-only rejects as item `0x0A`, normalized today as
+  `address-out-of-range`). See `docs/compatibility.md`.

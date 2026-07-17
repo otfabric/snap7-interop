@@ -1,7 +1,7 @@
 # Machine-readable version manifest for snap-interop.
-# Unresolved fields use null until the corresponding pin is chosen and recorded.
+# Image digests and upstream pins are release artifacts; do not float tags.
 
-snap_interop: "0.0.1"
+snap_interop: "0.1.0"
 fixture_schema: "1.0.0"
 fixture_compiler: "0.1.0"
 
@@ -9,7 +9,7 @@ native_snap7:
   repository: "https://github.com/SCADACS/snap7"
   revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"
   license: "LGPL-3.0-or-later"
-  note: "SCADACS fork (Snap7 1.4.0 lineage). Upstream unix makefiles cover x86_64/i386/armv6/armv7; aarch64 needs a custom makefile before linux/arm64 images."
+  note: "SCADACS fork (Snap7 1.4.0 lineage). linux/arm64 uses in-tree aarch64_linux.mk."
 
 python_snap7:
   package: "python-snap7"
@@ -18,10 +18,12 @@ python_snap7:
   note: "Pure-Python Server API (snap7.server.Server). Image must not load libsnap7."
 
 base_images:
-  # debian:bookworm-slim — digest recorded from local pull 2026-07-17; wire into Dockerfile in M6.
+  # Digests recorded 2026-07-17; Dockerfiles pin these by digest.
+  debian_bookworm_slim: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
+  python_3_12_slim_bookworm: "docker.io/library/python:3.12-slim-bookworm@sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b"
   native_builder: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
   native_runtime: "docker.io/library/debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818"
-  python_runtime: "docker.io/library/python:3.12-slim-bookworm"
+  python_runtime: "docker.io/library/python:3.12-slim-bookworm@sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b"
 
 tooling:
   go: "1.23"
@@ -30,3 +32,14 @@ tooling:
 images:
   native: "ghcr.io/otfabric/snap-interop-native"
   python: "ghcr.io/otfabric/snap-interop-python"
+
+platforms:
+  - "linux/amd64"
+  - "linux/arm64"
+
+security:
+  release_blocking_severities:
+    - CRITICAL
+    - HIGH
+  pr_blocking_severities:
+    - CRITICAL

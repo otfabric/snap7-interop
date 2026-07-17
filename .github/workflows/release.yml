@@ -1,0 +1,161 @@
+name: Release
+run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+env:
+  GOWORK: "off"
+  REGISTRY: ghcr.io
+  NATIVE_IMAGE: ghcr.io/otfabric/snap-interop-native
+  PYTHON_IMAGE: ghcr.io/otfabric/snap-interop-python
+
+jobs:
+  release:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.23.x"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve version
+        id: meta
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Notices + CI
+        run: |
+          chmod +x scripts/check-notices.sh
+          ./scripts/check-notices.sh
+          make ci
+
+      - name: Build amd64 images for pre-publish scan
+        run: |
+          docker build --platform=linux/amd64 -f servers/native/Dockerfile -t snap-interop-native:release-scan .
+          docker build --platform=linux/amd64 -f servers/python/Dockerfile -t snap-interop-python:release-scan .
+
+      - name: Scan native (fixable CRITICAL,HIGH block release)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: snap-interop-native:release-scan
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Scan python (fixable CRITICAL,HIGH block release)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: snap-interop-python:release-scan
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Build and push native (multi-arch)
+        id: native
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: servers/native/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: true
+          sbom: true
+          tags: |
+            ${{ env.NATIVE_IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.NATIVE_IMAGE }}:${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.vendor=otfabric
+
+      - name: Build and push python (multi-arch)
+        id: python
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: servers/python/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: true
+          sbom: true
+          tags: |
+            ${{ env.PYTHON_IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.PYTHON_IMAGE }}:${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.vendor=otfabric
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v4.1.2
+
+      - name: Sign images (keyless)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign sign --yes "${NATIVE_IMAGE}@${{ steps.native.outputs.digest }}"
+          cosign sign --yes "${PYTHON_IMAGE}@${{ steps.python.outputs.digest }}"
+
+      - name: Write release manifest
+        run: |
+          mkdir -p dist/release
+          {
+            echo "snap_interop: ${{ steps.meta.outputs.version }}"
+            echo "git_sha: ${{ github.sha }}"
+            echo "native_image: ${NATIVE_IMAGE}"
+            echo "native_tag: ${{ steps.meta.outputs.tag }}"
+            echo "native_digest: ${{ steps.native.outputs.digest }}"
+            echo "python_image: ${PYTHON_IMAGE}"
+            echo "python_tag: ${{ steps.meta.outputs.tag }}"
+            echo "python_digest: ${{ steps.python.outputs.digest }}"
+          } > dist/release/images.txt
+          cp versions.yaml dist/release/versions.yaml
+          cp THIRD_PARTY_NOTICES.md dist/release/THIRD_PARTY_NOTICES.md
+          sha256sum dist/release/images.txt dist/release/versions.yaml dist/release/THIRD_PARTY_NOTICES.md > dist/release/SHA256SUMS
+          cat dist/release/images.txt
+
+      - name: Source SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: dist/release/source.spdx.json
+
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/release/**
+          generate_release_notes: true

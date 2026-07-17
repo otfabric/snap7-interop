@@ -1,11 +1,14 @@
-# Multi-stage native Snap7 server. Do not publish until release hardening (M6).
-# Build from repository root:
-#   docker build --platform=linux/amd64 -f servers/native/Dockerfile -t snap-interop-native:local .
+# Multi-stage native Snap7 server.
+# Build from repository root (linux/amd64 or linux/arm64):
+#   docker buildx build --platform=linux/amd64 -f servers/native/Dockerfile -t snap-interop-native:local .
 
-FROM debian:bookworm-slim AS snap7-build
+ARG DEBIAN_DIGEST=sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
+
+FROM debian:bookworm-slim@${DEBIAN_DIGEST} AS snap7-build
 
 ARG SNAP7_REPO=https://github.com/SCADACS/snap7.git
 ARG SNAP7_REVISION=f6ff90317ca5d54250f4dcd29209689a74e26d82
+ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -20,10 +23,20 @@ RUN git clone "${SNAP7_REPO}" snap7 \
     && git checkout --detach "${SNAP7_REVISION}" \
     && test "$(git rev-parse HEAD)" = "${SNAP7_REVISION}"
 
-WORKDIR /src/snap7/build/unix
-RUN make -f x86_64_linux.mk all
+# In-tree aarch64 makefile (upstream ships armv6/v7 only).
+COPY servers/native/snap7/aarch64_linux.mk /src/snap7/build/unix/aarch64_linux.mk
 
-FROM debian:bookworm-slim AS adapter-build
+WORKDIR /src/snap7/build/unix
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) make -f x86_64_linux.mk all ;; \
+      arm64) make -f aarch64_linux.mk all ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac
+
+FROM debian:bookworm-slim@${DEBIAN_DIGEST} AS adapter-build
+
+ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
@@ -38,14 +51,22 @@ COPY --from=snap7-build /src/snap7 /src/snap7
 COPY servers/native /src/adapter
 
 WORKDIR /src/adapter/build
-RUN cmake .. \
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) snap7_lib=/src/snap7/build/bin/x86_64-linux ;; \
+      arm64) snap7_lib=/src/snap7/build/bin/aarch64-linux ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    cmake .. \
       -DCMAKE_BUILD_TYPE=Release \
       -DSNAP7_ROOT=/src/snap7 \
-      -DSNAP7_LIB_DIR=/src/snap7/build/bin/x86_64-linux \
+      -DSNAP7_LIB_DIR="${snap7_lib}" \
     && cmake --build . --config Release \
     && cmake --install . --prefix /opt/snap-interop
 
-FROM debian:bookworm-slim AS runtime
+FROM debian:bookworm-slim@${DEBIAN_DIGEST} AS runtime
+
+ARG TARGETARCH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash \
@@ -56,11 +77,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && useradd --system --uid 10001 --create-home --home-dir /home/snap \
          --shell /usr/sbin/nologin snap
 
-COPY --from=snap7-build /src/snap7/build/bin/x86_64-linux/libsnap7.so /usr/local/lib/libsnap7.so
+COPY --from=snap7-build /src/snap7/build/bin/ /opt/snap7-bin/
 COPY --from=snap7-build /src/snap7/lgpl-3.0.txt /usr/share/doc/snap7/lgpl-3.0.txt
 COPY --from=adapter-build /opt/snap-interop/bin/snap-interop-native /usr/local/bin/snap-interop-native
 
-RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/snap7.conf \
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) src=/opt/snap7-bin/x86_64-linux/libsnap7.so ;; \
+      arm64) src=/opt/snap7-bin/aarch64-linux/libsnap7.so ;; \
+      *) echo "unsupported TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+    esac; \
+    cp "${src}" /usr/local/lib/libsnap7.so \
+    && rm -rf /opt/snap7-bin \
+    && echo "/usr/local/lib" > /etc/ld.so.conf.d/snap7.conf \
     && ldconfig \
     && setcap 'cap_net_bind_service=+ep' /usr/local/bin/snap-interop-native \
     && mkdir -p /run/snap-interop /fixtures \

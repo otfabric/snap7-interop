@@ -1,6 +1,6 @@
 package fixture
 
-// Limits bound fixture allocations for safety (REQUIREMENTS §15).
+// Limits bound fixture allocations for safety.
 const (
 	MaxAreaBytes       = 1 << 20 // 1 MiB per area
 	MaxAreas           = 64

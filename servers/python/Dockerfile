@@ -1,8 +1,11 @@
 # Pure-Python snap-interop server. Must not load native Snap7.
 # Build from repository root:
-#   docker build -f servers/python/Dockerfile -t snap-interop-python:local .
+#   docker buildx build --platform=linux/amd64,linux/arm64 \
+#     -f servers/python/Dockerfile -t snap-interop-python:local .
 
-FROM python:3.12-slim-bookworm AS build
+ARG PYTHON_DIGEST=sha256:d50fb7611f86d04a3b0471b46d7557818d88983fc3136726336b2a4c657aa30b
+
+FROM python:3.12-slim-bookworm@${PYTHON_DIGEST} AS build
 
 WORKDIR /src
 COPY servers/python/requirements.txt servers/python/pyproject.toml servers/python/README.md ./
@@ -25,7 +28,7 @@ assert not list(root.rglob("*.dll"))
 print("OK: no native Snap7 library")
 PY
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@${PYTHON_DIGEST} AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       bash \
