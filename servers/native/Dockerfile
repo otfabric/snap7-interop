@@ -1,6 +1,6 @@
 # Multi-stage native Snap7 server.
 # Build from repository root (linux/amd64 or linux/arm64):
-#   docker buildx build --platform=linux/amd64 -f servers/native/Dockerfile -t snap-interop-native:local .
+#   docker buildx build --platform=linux/amd64 -f servers/native/Dockerfile -t snap7-interop-native:local .
 
 ARG DEBIAN_DIGEST=sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
 
@@ -62,7 +62,7 @@ RUN set -eux; \
       -DSNAP7_ROOT=/src/snap7 \
       -DSNAP7_LIB_DIR="${snap7_lib}" \
     && cmake --build . --config Release \
-    && cmake --install . --prefix /opt/snap-interop
+    && cmake --install . --prefix /opt/snap7-interop
 
 FROM debian:bookworm-slim@${DEBIAN_DIGEST} AS runtime
 
@@ -81,7 +81,7 @@ RUN apt-get update && apt-get upgrade -y --no-install-recommends \
 
 COPY --from=snap7-build /src/snap7/build/bin/ /opt/snap7-bin/
 COPY --from=snap7-build /src/snap7/lgpl-3.0.txt /usr/share/doc/snap7/lgpl-3.0.txt
-COPY --from=adapter-build /opt/snap-interop/bin/snap-interop-native /usr/local/bin/snap-interop-native
+COPY --from=adapter-build /opt/snap7-interop/bin/snap7-interop-native /usr/local/bin/snap7-interop-native
 
 RUN set -eux; \
     case "${TARGETARCH}" in \
@@ -93,7 +93,7 @@ RUN set -eux; \
     && rm -rf /opt/snap7-bin \
     && echo "/usr/local/lib" > /etc/ld.so.conf.d/snap7.conf \
     && ldconfig \
-    && setcap 'cap_net_bind_service=+ep' /usr/local/bin/snap-interop-native \
+    && setcap 'cap_net_bind_service=+ep' /usr/local/bin/snap7-interop-native \
     && mkdir -p /run/snap-interop /fixtures \
     && chown snap:snap /run/snap-interop
 
@@ -110,4 +110,4 @@ EXPOSE 102
 HEALTHCHECK --interval=2s --timeout=2s --start-period=5s --retries=15 \
   CMD bash -c 'exec 3<>/dev/tcp/127.0.0.1/$SNAP_INTEROP_PORT'
 
-ENTRYPOINT ["/usr/local/bin/snap-interop-native"]
+ENTRYPOINT ["/usr/local/bin/snap7-interop-native"]

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/otfabric/snap-interop/internal/fixture"
+	"github.com/otfabric/snap7-interop/internal/fixture"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, `fixturectl — snap-interop fixture tooling
+	fmt.Fprintf(os.Stderr, `fixturectl — snap7-interop fixture tooling
 
 Usage:
   fixturectl validate [--schema PATH] [--json] FILE [FILE...]

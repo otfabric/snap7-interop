@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(snap_interop_native LANGUAGES CXX)
+project(snap7_interop_native LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,22 +29,22 @@ find_library(SNAP7_LIBRARY
 
 find_package(nlohmann_json 3.11 REQUIRED)
 
-add_executable(snap-interop-native
+add_executable(snap7-interop-native
   src/main.cpp
   src/fixture.cpp
   src/log.cpp
   src/state.cpp
 )
 
-target_include_directories(snap-interop-native PRIVATE
+target_include_directories(snap7-interop-native PRIVATE
   "${SNAP7_INCLUDE_DIR}"
   "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
 
-target_link_libraries(snap-interop-native PRIVATE
+target_link_libraries(snap7-interop-native PRIVATE
   "${SNAP7_LIBRARY}"
   nlohmann_json::nlohmann_json
   pthread
 )
 
-install(TARGETS snap-interop-native RUNTIME DESTINATION bin)
+install(TARGETS snap7-interop-native RUNTIME DESTINATION bin)

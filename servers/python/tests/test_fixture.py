@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from snap_interop_server.fixture import load_compiled_fixture
+from snap7_interop_server.fixture import load_compiled_fixture
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 

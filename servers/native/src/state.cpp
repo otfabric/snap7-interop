@@ -8,7 +8,7 @@
 
 #include <nlohmann/json.hpp>
 
-namespace snap_interop {
+namespace snap7_interop {
 namespace {
 
 std::string UTCTimestamp() {
@@ -112,4 +112,4 @@ void WriteStateSnapshot(const std::string& path,
   }
 }
 
-}  // namespace snap_interop
+}  // namespace snap7_interop

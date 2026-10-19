@@ -12,6 +12,58 @@
 
 ---
 
+## v0.3.0
+
+**Date:** 2026-10-19
+**Previous release:** v0.2.0
+
+## Summary
+
+The project's artifacts now carry its name, snap7-interop. The servers, the
+fixtures and the interop results are unchanged.
+
+### Breaking changes
+
+- **Images**: published as `ghcr.io/otfabric/snap7-interop-native` and
+  `ghcr.io/otfabric/snap7-interop-python`. v0.2.0 and earlier stay available
+  under the old `snap-interop-native` and `snap-interop-python` names; no new
+  tags are pushed there.
+- **Go module**: `github.com/otfabric/snap7-interop` (was
+  `github.com/otfabric/snap-interop`). The module only holds internal packages
+  and tooling, so no importer is affected.
+- **Server binaries and package**: `snap7-interop-native`, `snap7-interop-python`,
+  and the Python package `snap7_interop_server` (distribution
+  `snap7-interop-server`). Both images keep their entrypoints, so `docker run`
+  invocations need only the new image name.
+- **versions.yaml**: the version key is `snap7_interop` (was `snap_interop`).
+
+### Unchanged
+
+- The container contract: the `SNAP_INTEROP_*` environment variables, the
+  `/run/snap-interop` state directory, ports, log events and exit codes.
+- The compiled fixture format string `snap-interop-compiled-fixture` and the
+  fixture contents, so vendored fixtures in consumers stay valid.
+
+## Pins
+
+| Component | Version / pin |
+| --- | --- |
+| `snap7_interop` | `0.3.0` |
+| Fixture schema | `1.0.0` |
+| Fixture compiler | `0.1.0` |
+| Native Snap7 | `f6ff90317ca5d54250f4dcd29209689a74e26d82` |
+| `python-snap7` | `3.2.1` |
+| Tooling | Go 1.23, Python 3.12 |
+
+## Pull
+
+```bash
+docker pull ghcr.io/otfabric/snap7-interop-native:v0.3.0
+docker pull ghcr.io/otfabric/snap7-interop-python:v0.3.0
+```
+
+---
+
 ## v0.2.0
 
 **Date:** 2026-10-19

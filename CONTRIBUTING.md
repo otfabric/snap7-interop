@@ -75,7 +75,7 @@ downstream. See README “Published images”.
 
 1. Move notes from **Unreleased** into a new `## vX.Y.Z` section in
    [RELEASE.md](RELEASE.md) (Summary, Breaking changes, pins if relevant).
-2. Bump `snap_interop` in `versions.yaml` (and README badge / pull examples).
+2. Bump `snap7_interop` in `versions.yaml` (and README badge / pull examples).
 3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` publishes GHCR images
    and attaches release artifacts.
 

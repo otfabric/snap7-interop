@@ -61,11 +61,11 @@ byte S7AreaCodeFor(const std::string& type) {
 }
 
 struct RWContext {
-  std::vector<snap_interop::AreaBuffer>* areas = nullptr;
+  std::vector<snap7_interop::AreaBuffer>* areas = nullptr;
   std::mutex mu;
 };
 
-bool FixtureHasReadOnly(const snap_interop::CompiledFixture& fixture) {
+bool FixtureHasReadOnly(const snap7_interop::CompiledFixture& fixture) {
   for (const auto& a : fixture.areas) {
     if (a.access == "read-only") {
       return true;
@@ -74,7 +74,7 @@ bool FixtureHasReadOnly(const snap_interop::CompiledFixture& fixture) {
   return false;
 }
 
-snap_interop::AreaBuffer* FindArea(RWContext* ctx, int area, int db_number) {
+snap7_interop::AreaBuffer* FindArea(RWContext* ctx, int area, int db_number) {
   if (ctx == nullptr || ctx->areas == nullptr) {
     return nullptr;
   }
@@ -206,31 +206,31 @@ int main(int argc, char** argv) {
     return 2;
   }
 
-  snap_interop::CompiledFixture fixture;
+  snap7_interop::CompiledFixture fixture;
   try {
-    fixture = snap_interop::LoadCompiledFixture(fixture_path);
+    fixture = snap7_interop::LoadCompiledFixture(fixture_path);
   } catch (const std::exception& ex) {
-    snap_interop::LogJSON("error", "fatal_error", "unknown",
+    snap7_interop::LogJSON("error", "fatal_error", "unknown",
                           std::string("\"error\": \"") + ex.what() + "\"");
     return 1;
   }
 
-  snap_interop::LogJSON(
+  snap7_interop::LogJSON(
       "info", "fixture_loaded", fixture.id,
       "\"compiled_sha256\": \"" + fixture.compiled_sha256 + "\"");
 
-  snap_interop::RuntimeCounters counters;
+  snap7_interop::RuntimeCounters counters;
   try {
-    snap_interop::WriteStateSnapshot(state_path, fixture, "starting", counters);
+    snap7_interop::WriteStateSnapshot(state_path, fixture, "starting", counters);
   } catch (const std::exception& ex) {
-    snap_interop::LogJSON("error", "fatal_error", fixture.id,
+    snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                           std::string("\"error\": \"") + ex.what() + "\"");
     return 1;
   }
 
   S7Object server = Srv_Create();
   if (server == 0) {
-    snap_interop::LogJSON("error", "fatal_error", fixture.id,
+    snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                           "\"error\": \"Srv_Create failed\"");
     return 1;
   }
@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
   if (err != 0) {
     char text[256];
     Srv_ErrorText(err, text, sizeof(text));
-    snap_interop::LogJSON("error", "fatal_error", fixture.id,
+    snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                           std::string("\"error\": \"Srv_SetParam port: ") +
                               text + "\"");
     Srv_Destroy(&server);
@@ -252,7 +252,7 @@ int main(int argc, char** argv) {
     int32_t pdu = fixture.pdu_size;
     err = Srv_SetParam(server, p_i32_PDURequest, &pdu);
     if (err != 0) {
-      snap_interop::LogJSON(
+      snap7_interop::LogJSON(
           "warn", "fixture_loaded", fixture.id,
           "\"warning\": \"PDU size param not applied\", \"code\": " +
               std::to_string(err));
@@ -268,19 +268,19 @@ int main(int argc, char** argv) {
     if (err != 0) {
       char text[256];
       Srv_ErrorText(err, text, sizeof(text));
-      snap_interop::LogJSON(
+      snap7_interop::LogJSON(
           "error", "fatal_error", fixture.id,
           std::string("\"error\": \"Srv_SetRWAreaCallback: ") + text + "\"");
       Srv_Destroy(&server);
       return 1;
     }
-    snap_interop::LogJSON("info", "fixture_loaded", fixture.id,
+    snap7_interop::LogJSON("info", "fixture_loaded", fixture.id,
                           "\"mode\": \"resource-less-readonly\"");
   } else {
     for (auto& area : fixture.areas) {
       const int code = AreaCodeFor(area.type);
       if (code < 0) {
-        snap_interop::LogJSON("error", "fatal_error", fixture.id,
+        snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                               "\"error\": \"unsupported area type " + area.type +
                                   "\"");
         Srv_Destroy(&server);
@@ -289,7 +289,7 @@ int main(int argc, char** argv) {
       word index = 0;
       if (area.type == "db") {
         if (area.number < 1 || area.number > 65535) {
-          snap_interop::LogJSON("error", "fatal_error", fixture.id,
+          snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                                 "\"error\": \"invalid DB number\"");
           Srv_Destroy(&server);
           return 1;
@@ -302,7 +302,7 @@ int main(int argc, char** argv) {
       if (err != 0) {
         char text[256];
         Srv_ErrorText(err, text, sizeof(text));
-        snap_interop::LogJSON("error", "fatal_error", fixture.id,
+        snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                               std::string("\"error\": \"Srv_RegisterArea: ") +
                                   text + "\"");
         Srv_Destroy(&server);
@@ -314,7 +314,7 @@ int main(int argc, char** argv) {
   std::signal(SIGTERM, OnSignal);
   std::signal(SIGINT, OnSignal);
 
-  snap_interop::LogJSON(
+  snap7_interop::LogJSON(
       "info", "server_starting", fixture.id,
       "\"listen_address\": \"" + listen_addr +
           "\", \"port\": " + std::to_string(port));
@@ -323,7 +323,7 @@ int main(int argc, char** argv) {
   if (err != 0) {
     char text[256];
     Srv_ErrorText(err, text, sizeof(text));
-    snap_interop::LogJSON("error", "fatal_error", fixture.id,
+    snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                           std::string("\"error\": \"Srv_StartTo: ") + text +
                               "\"");
     Srv_Destroy(&server);
@@ -331,35 +331,35 @@ int main(int argc, char** argv) {
   }
 
   try {
-    snap_interop::WriteStateSnapshot(state_path, fixture, "ready", counters);
+    snap7_interop::WriteStateSnapshot(state_path, fixture, "ready", counters);
   } catch (const std::exception& ex) {
-    snap_interop::LogJSON("error", "fatal_error", fixture.id,
+    snap7_interop::LogJSON("error", "fatal_error", fixture.id,
                           std::string("\"error\": \"") + ex.what() + "\"");
     Srv_Stop(server);
     Srv_Destroy(&server);
     return 1;
   }
 
-  snap_interop::LogJSON("info", "server_ready", fixture.id,
+  snap7_interop::LogJSON("info", "server_ready", fixture.id,
                         "\"port\": " + std::to_string(port));
 
   while (!g_stop.load()) {
     // Periodically refresh diagnostic snapshot so writes are visible.
     try {
-      snap_interop::WriteStateSnapshot(state_path, fixture, "ready", counters);
+      snap7_interop::WriteStateSnapshot(state_path, fixture, "ready", counters);
     } catch (...) {
       // Best-effort diagnostics must not kill the server.
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 
-  snap_interop::LogJSON("info", "server_stopping", fixture.id, "{}");
+  snap7_interop::LogJSON("info", "server_stopping", fixture.id, "{}");
   Srv_Stop(server);
   try {
-    snap_interop::WriteStateSnapshot(state_path, fixture, "stopped", counters);
+    snap7_interop::WriteStateSnapshot(state_path, fixture, "stopped", counters);
   } catch (...) {
   }
   Srv_Destroy(&server);
-  snap_interop::LogJSON("info", "server_stopped", fixture.id, "{}");
+  snap7_interop::LogJSON("info", "server_stopped", fixture.id, "{}");
   return 0;
 }

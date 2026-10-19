@@ -1,7 +1,7 @@
-# Machine-readable version manifest for snap-interop.
+# Machine-readable version manifest for snap7-interop.
 # Image digests and upstream pins are release artifacts; do not float tags.
 
-snap_interop: "0.2.0"
+snap7_interop: "0.3.0"
 fixture_schema: "1.0.0"
 fixture_compiler: "0.1.0"
 
@@ -30,8 +30,8 @@ tooling:
   python: "3.12"
 
 images:
-  native: "ghcr.io/otfabric/snap-interop-native"
-  python: "ghcr.io/otfabric/snap-interop-python"
+  native: "ghcr.io/otfabric/snap7-interop-native"
+  python: "ghcr.io/otfabric/snap7-interop-python"
 
 platforms:
   - "linux/amd64"

@@ -2,7 +2,7 @@
 
 C++ adapter around pinned SCADACS/snap7 (`versions.yaml` → `native_snap7.revision`).
 
-Published image: `ghcr.io/otfabric/snap-interop-native`.
+Published image: `ghcr.io/otfabric/snap7-interop-native`.
 
 Scope, fixture catalog, and out-of-scope topics:
 [repository README](../../README.md). Compatibility notes:

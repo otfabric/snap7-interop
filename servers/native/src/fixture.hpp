@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace snap_interop {
+namespace snap7_interop {
 
 struct AreaBuffer {
   std::string type;
@@ -28,4 +28,4 @@ struct CompiledFixture {
 // Load and validate a compiled fixture JSON document.
 CompiledFixture LoadCompiledFixture(const std::string& path);
 
-}  // namespace snap_interop
+}  // namespace snap7_interop

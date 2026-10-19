@@ -1,7 +1,7 @@
 [project]
-name = "snap-interop-server"
+name = "snap7-interop-server"
 version = "0.1.0"
-description = "Pure-Python snap-interop S7 server adapter"
+description = "Pure-Python snap7-interop S7 server adapter"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,14 +9,14 @@ dependencies = [
 ]
 
 [project.scripts]
-snap-interop-python = "snap_interop_server.main:main"
+snap7-interop-python = "snap7_interop_server.main:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["snap_interop_server*"]
+include = ["snap7_interop_server*"]
 
 [tool.ruff]
 line-length = 100
@@ -29,7 +29,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.12"
 strict = true
 warn_unused_configs = true
-packages = ["snap_interop_server"]
+packages = ["snap7_interop_server"]
 
 [[tool.mypy.overrides]]
 module = ["snap7", "snap7.*"]

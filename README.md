@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml/badge.svg)](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](versions.yaml)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](versions.yaml)
 [![Platforms](https://img.shields.io/badge/platforms-linux%2Famd64%20%7C%20linux%2Farm64-informational)](#published-images-ghcr)
 [![Go](https://img.shields.io/badge/Go-1.23-00ADD8?logo=go&logoColor=white)](versions.yaml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](versions.yaml)
@@ -16,8 +16,11 @@ images publish to GHCR. Remaining work is listed under [Open TODOs](#open-todos)
 
 | Image | Registry |
 | --- | --- |
-| Native Snap7 server | `ghcr.io/otfabric/snap-interop-native` |
-| Pure-Python server | `ghcr.io/otfabric/snap-interop-python` |
+| Native Snap7 server | `ghcr.io/otfabric/snap7-interop-native` |
+| Pure-Python server | `ghcr.io/otfabric/snap7-interop-python` |
+
+Releases up to v0.2.0 were published as `ghcr.io/otfabric/snap-interop-native`
+and `ghcr.io/otfabric/snap-interop-python`; those tags stay available.
 
 This repository stays client-neutral: it does not depend on `go-s7comm`.
 
@@ -123,8 +126,8 @@ source fixture (fixtures/canonical/*.json)
        ├── JSON Schema + semantic validation
        └── canonical compilation → fixtures/compiled/*.compiled.json
                 │
-                ├── ghcr.io/otfabric/snap-interop-native
-                └── ghcr.io/otfabric/snap-interop-python
+                ├── ghcr.io/otfabric/snap7-interop-native
+                └── ghcr.io/otfabric/snap7-interop-python
                          │
                          └── black-box probe / make interop reports
 ```
@@ -194,18 +197,18 @@ These must **fail** `fixturectl validate` (used by `make test`):
 ## Published images (GHCR)
 
 Tags are immutable (no floating `latest`): `v<version>` and `<version>` from
-`versions.yaml` (`snap_interop`, currently `0.2.0`). Changelog: [RELEASE.md](RELEASE.md).
+`versions.yaml` (`snap7_interop`, currently `0.3.0`). Changelog: [RELEASE.md](RELEASE.md).
 
 ```bash
-docker pull ghcr.io/otfabric/snap-interop-native:v0.2.0
-docker pull ghcr.io/otfabric/snap-interop-python:v0.2.0
+docker pull ghcr.io/otfabric/snap7-interop-native:v0.3.0
+docker pull ghcr.io/otfabric/snap7-interop-python:v0.3.0
 
 docker run --rm -p 1102:102 --read-only \
   --tmpfs /tmp --tmpfs /run/snap-interop:uid=10001,gid=10001,mode=0755 \
   --cap-drop ALL --cap-add NET_BIND_SERVICE \
   -v "$PWD/fixtures/compiled:/fixtures:ro" \
   -e SNAP_INTEROP_FIXTURE=/fixtures/basic-db.compiled.json \
-  ghcr.io/otfabric/snap-interop-native:v0.2.0
+  ghcr.io/otfabric/snap7-interop-native:v0.3.0
 ```
 
 Publish multi-arch images (requires `docker login ghcr.io` with `write:packages`;
@@ -213,13 +216,13 @@ set package visibility to **Public** for anonymous pulls):
 
 ```bash
 make publish
-# IMAGE_TAG=0.2.0 PUBLISH_PLATFORMS=linux/amd64,linux/arm64 make publish
+# IMAGE_TAG=0.3.0 PUBLISH_PLATFORMS=linux/amd64,linux/arm64 make publish
 ```
 
 Prefer digest pins in go-s7comm CI:
 
 ```bash
-docker buildx imagetools inspect ghcr.io/otfabric/snap-interop-native:v0.2.0
+docker buildx imagetools inspect ghcr.io/otfabric/snap7-interop-native:v0.3.0
 ```
 
 ## Container contract
@@ -311,9 +314,9 @@ Typed values are compiled once into canonical bytes. Adapters do not encode type
 
 ```text
 go-s7comm CI
-├── pull ghcr.io/otfabric/snap-interop-native@sha256:…
+├── pull ghcr.io/otfabric/snap7-interop-native@sha256:…
 ├── run client tests
-├── pull ghcr.io/otfabric/snap-interop-python@sha256:…
+├── pull ghcr.io/otfabric/snap7-interop-python@sha256:…
 ├── run identical client tests
 └── retain logs / fixture reports on failure
 ```
@@ -349,7 +352,7 @@ snap7-interop/
 
 Version independently:
 
-- repository / image tags (`versions.yaml` → `snap_interop`);
+- repository / image tags (`versions.yaml` → `snap7_interop`);
 - fixture schema and compiler;
 - individual fixture revisions;
 - native Snap7 git revision;

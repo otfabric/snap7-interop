@@ -76,7 +76,7 @@ jobs:
         run: |
           cp servers/python/requirements.txt /tmp/requirements.release
           echo "python-snap7==${{ steps.resolve.outputs.latest }}" > servers/python/requirements.txt
-          docker build -f servers/python/Dockerfile -t snap-interop-python:candidate .
+          docker build -f servers/python/Dockerfile -t snap7-interop-python:candidate .
           mv /tmp/requirements.release servers/python/requirements.txt
 
   candidate-snap7-tip:
@@ -175,7 +175,7 @@ jobs:
           docker build --platform=linux/amd64 \
             -f servers/native/Dockerfile \
             --build-arg "SNAP7_REVISION=${{ steps.resolve.outputs.tip_sha }}" \
-            -t snap-interop-native:candidate \
+            -t snap7-interop-native:candidate \
             .
 
   summary:

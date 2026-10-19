@@ -27,27 +27,27 @@ run_syft() {
 echo "==> source SBOM (repository tree)"
 run_syft dir:. "${OUT}/source.spdx.json" "${OUT}/source.cdx.json"
 
-if docker image inspect "${NATIVE_IMAGE:-snap-interop-native:local}" >/dev/null 2>&1; then
+if docker image inspect "${NATIVE_IMAGE:-snap7-interop-native:local}" >/dev/null 2>&1; then
   echo "==> native image SBOM"
   # syft needs access to the host docker daemon for local images
   docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "${root}/${OUT}:/out" \
     "${SYFT_IMAGE}" \
-    "docker:${NATIVE_IMAGE:-snap-interop-native:local}" \
+    "docker:${NATIVE_IMAGE:-snap7-interop-native:local}" \
     -o "spdx-json=/out/native.spdx.json" \
     -o "cyclonedx-json=/out/native.cdx.json"
 else
   echo "skip native image SBOM (image not present; build with make native)"
 fi
 
-if docker image inspect "${PYTHON_IMAGE:-snap-interop-python:local}" >/dev/null 2>&1; then
+if docker image inspect "${PYTHON_IMAGE:-snap7-interop-python:local}" >/dev/null 2>&1; then
   echo "==> python image SBOM"
   docker run --rm \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v "${root}/${OUT}:/out" \
     "${SYFT_IMAGE}" \
-    "docker:${PYTHON_IMAGE:-snap-interop-python:local}" \
+    "docker:${PYTHON_IMAGE:-snap7-interop-python:local}" \
     -o "spdx-json=/out/python.spdx.json" \
     -o "cyclonedx-json=/out/python.cdx.json"
 else

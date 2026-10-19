@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <ctime>
 
-namespace snap_interop {
+namespace snap7_interop {
 namespace {
 
 constexpr const char* kAdapterVersion = "0.1.0";
@@ -55,4 +55,4 @@ void LogJSON(const std::string& level,
   std::fflush(stdout);
 }
 
-}  // namespace snap_interop
+}  // namespace snap7_interop

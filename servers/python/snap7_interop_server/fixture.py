@@ -1,4 +1,4 @@
-"""Load compiled snap-interop fixtures."""
+"""Load compiled snap7-interop fixtures."""
 
 from __future__ import annotations
 

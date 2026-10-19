@@ -16,8 +16,8 @@ cd "${root}"
 
 DOCKER="${DOCKER:-docker}"
 GHCR_OWNER="${GHCR_OWNER:-otfabric}"
-NATIVE_REPO="${GHCR_NATIVE:-ghcr.io/${GHCR_OWNER}/snap-interop-native}"
-PYTHON_REPO="${GHCR_PYTHON:-ghcr.io/${GHCR_OWNER}/snap-interop-python}"
+NATIVE_REPO="${GHCR_NATIVE:-ghcr.io/${GHCR_OWNER}/snap7-interop-native}"
+PYTHON_REPO="${GHCR_PYTHON:-ghcr.io/${GHCR_OWNER}/snap7-interop-python}"
 PUBLISH_PLATFORMS="${PUBLISH_PLATFORMS:-linux/amd64,linux/arm64}"
 
 if [[ -z "${IMAGE_TAG:-}" ]]; then
@@ -25,11 +25,11 @@ if [[ -z "${IMAGE_TAG:-}" ]]; then
     IMAGE_TAG="$(python3 - <<'PY'
 import yaml
 with open("versions.yaml", encoding="utf-8") as f:
-    print(yaml.safe_load(f)["snap_interop"])
+    print(yaml.safe_load(f)["snap7_interop"])
 PY
 )"
   else
-    IMAGE_TAG="$(sed -n 's/^snap_interop:[[:space:]]*"\([^"]*\)"/\1/p' versions.yaml | head -1)"
+    IMAGE_TAG="$(sed -n 's/^snap7_interop:[[:space:]]*"\([^"]*\)"/\1/p' versions.yaml | head -1)"
   fi
 fi
 if [[ -z "${IMAGE_TAG}" ]]; then
@@ -43,7 +43,7 @@ V_TAG="v${VERSION_TAG}"
 
 GIT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
-echo "Publishing snap-interop images to GHCR"
+echo "Publishing snap7-interop images to GHCR"
 echo "  native:  ${NATIVE_REPO}:{${V_TAG},${VERSION_TAG}}"
 echo "  python:  ${PYTHON_REPO}:{${V_TAG},${VERSION_TAG}}"
 echo "  platforms: ${PUBLISH_PLATFORMS}"
@@ -55,10 +55,10 @@ if ! "${DOCKER}" buildx version >/dev/null 2>&1; then
 fi
 
 # Ensure a builder that can push multi-platform manifests.
-if ! "${DOCKER}" buildx inspect snap-interop-publisher >/dev/null 2>&1; then
-  "${DOCKER}" buildx create --name snap-interop-publisher --use >/dev/null
+if ! "${DOCKER}" buildx inspect snap7-interop-publisher >/dev/null 2>&1; then
+  "${DOCKER}" buildx create --name snap7-interop-publisher --use >/dev/null
 else
-  "${DOCKER}" buildx use snap-interop-publisher >/dev/null
+  "${DOCKER}" buildx use snap7-interop-publisher >/dev/null
 fi
 
 SOURCE_URL="${IMAGE_SOURCE_URL:-https://github.com/${GHCR_OWNER}/snap7-interop}"
@@ -90,7 +90,7 @@ publish_one servers/python/Dockerfile "${PYTHON_REPO}"
 
 mkdir -p dist/release
 {
-  echo "snap_interop: ${VERSION_TAG}"
+  echo "snap7_interop: ${VERSION_TAG}"
   echo "git_sha: ${GIT_SHA}"
   echo "native_image: ${NATIVE_REPO}"
   echo "python_image: ${PYTHON_REPO}"

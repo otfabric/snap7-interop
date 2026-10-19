@@ -1,4 +1,4 @@
-module github.com/otfabric/snap-interop
+module github.com/otfabric/snap7-interop
 
 go 1.23
 

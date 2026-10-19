@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/otfabric/snap-interop/internal/fixture"
+	"github.com/otfabric/snap7-interop/internal/fixture"
 )
 
 func repoRoot(t *testing.T) string {
