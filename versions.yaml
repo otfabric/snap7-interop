@@ -1,7 +1,7 @@
 # Machine-readable version manifest for snap-interop.
 # Image digests and upstream pins are release artifacts; do not float tags.
 
-snap_interop: "0.1.0"
+snap_interop: "0.2.0"
 fixture_schema: "1.0.0"
 fixture_compiler: "0.1.0"
 
