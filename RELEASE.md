@@ -4,7 +4,7 @@
 
 ### Summary
 
-- (none yet)
+- **CI and release run on native runners**: each architecture builds on its own GitHub runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64) in parallel, with no QEMU emulation. CI now also smoke-tests, scans and runs interop on arm64. The release pushes each image and architecture by digest, then joins them into one signed multi-arch manifest list under the release tags. Both architectures are scanned for fixable CRITICAL and HIGH findings before anything is tagged.
 
 ### Breaking changes
 
