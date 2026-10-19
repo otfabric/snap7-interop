@@ -1,4 +1,4 @@
-# snap-interop native server
+# snap7-interop native server
 
 C++ adapter around pinned SCADACS/snap7 (`versions.yaml` → `native_snap7.revision`).
 

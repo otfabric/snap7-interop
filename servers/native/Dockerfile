@@ -68,7 +68,9 @@ FROM debian:bookworm-slim@${DEBIAN_DIGEST} AS runtime
 
 ARG TARGETARCH
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Take the Debian security updates the pinned base image does not carry yet.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
       bash \
       ca-certificates \
       libcap2-bin \

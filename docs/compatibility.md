@@ -34,7 +34,7 @@ by `make interop`. The canonical matrix (15 fixtures) passes on pinned
 
 | Topic | Finding | Impact |
 | --- | --- | --- |
-| Pinned release | `python-snap7==3.0.0` | `servers/python/requirements.txt` |
+| Pinned release | `python-snap7==3.2.1` | `servers/python/requirements.txt` |
 | Server API | `InteropServer` subclass of `snap7.server.Server` | Aligns OOR / bit / RO with native Snap7 |
 | Native library | Absent from wheel; build/test assert no `libsnap7` | Release-blocking if violated |
 | Access policy | Stock API ignores RO; adapter rejects with item `0x0A` | Matches native ResourceLess surface |

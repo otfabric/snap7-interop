@@ -1,6 +1,6 @@
 # Documentation
 
-Index of design and reference docs for `snap-interop`.
+Index of design and reference docs for `snap7-interop`.
 
 ## Table of contents
 

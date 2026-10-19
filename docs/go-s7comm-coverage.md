@@ -1,10 +1,10 @@
 # go-s7comm API coverage map
 
 Target client API:
-[`otfabric/go-s7comm` API.md](https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md)
-(branch `refactor/cotp-tp0-service`).
+[`otfabric/go-s7comm` API.md](https://github.com/otfabric/go-s7comm/blob/main/API.md)
+(branch `main`).
 
-This maps public client primitives to `snap-interop` fixtures. Fixtures gate
+This maps public client primitives to `snap7-interop` fixtures. Fixtures gate
 black-box behavior of the two servers. Wiring pinned GHCR images into
 `go-s7comm` CI is listed under [README open TODOs](../README.md#open-todos).
 

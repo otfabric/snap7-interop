@@ -1,6 +1,6 @@
 # Third-party notices
 
-This file lists third-party software incorporated into `snap-interop` server
+This file lists third-party software incorporated into `snap7-interop` server
 images and tooling. It must remain present before any published release.
 
 ## Snap7 (native server image)
@@ -27,7 +27,7 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 | --- | --- |
 | Component | python-snap7 |
 | Source | https://github.com/gijzelaerr/python-snap7 |
-| Pin | `3.0.0` (see `versions.yaml`) |
+| Pin | `3.2.1` (see `versions.yaml`) |
 | License | MIT |
 | Used by | `ghcr.io/otfabric/snap-interop-python` (pure-Python; no native `libsnap7`) |
 

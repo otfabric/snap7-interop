@@ -1,4 +1,4 @@
-# snap-interop Releases
+# snap7-interop Releases
 
 ## Unreleased
 
@@ -7,6 +7,46 @@
 - (none yet)
 
 ### Breaking changes
+
+- None.
+
+---
+
+## v0.2.0
+
+**Date:** 2026-10-19
+**Previous release:** v0.1.0
+
+## Summary
+
+Dependency and security refresh. The fixtures, the container contract and the
+interop results are unchanged.
+
+- **Pure-Python server**: `python-snap7` bumped from `3.0.0` to `3.2.1`. The adapter's `_read_from_memory_area` override now returns the item return code with the data, as 3.2 expects. All 15 canonical fixtures give the same results as on `3.0.0`.
+- **Image security**: both runtime images apply Debian security updates at build time, which clears the fixable critical `perl-base` CVEs (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) the image scan reported.
+- **Docs**: the project is named snap7-interop throughout, and go-s7comm links point at its `main` branch.
+
+## Pins
+
+| Component | Version / pin |
+| --- | --- |
+| `snap_interop` | `0.2.0` |
+| Fixture schema | `1.0.0` |
+| Fixture compiler | `0.1.0` |
+| Native Snap7 | `f6ff90317ca5d54250f4dcd29209689a74e26d82` |
+| `python-snap7` | `3.2.1` |
+| Tooling | Go 1.23, Python 3.12 |
+
+## Pull
+
+```bash
+docker pull ghcr.io/otfabric/snap-interop-native:v0.2.0
+docker pull ghcr.io/otfabric/snap-interop-python:v0.2.0
+```
+
+Prefer digest pins downstream (`docker buildx imagetools inspect …`).
+
+## Breaking changes
 
 - None.
 

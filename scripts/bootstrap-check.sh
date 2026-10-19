@@ -102,7 +102,7 @@ if grep -Eq 'revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"' versions.yaml
 else
   fail "native_snap7.revision must remain the pinned immutable SHA"
 fi
-if grep -Eq 'version: "3.0.0"' versions.yaml; then
+if grep -Eq 'version: "3.2.1"' versions.yaml; then
   ok "python_snap7 version pinned"
 else
   fail "python_snap7.version must remain the pinned release"
