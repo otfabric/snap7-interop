@@ -47,6 +47,13 @@ COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3
 COPY --from=build /usr/local/bin/snap-interop-python /usr/local/bin/snap-interop-python
 COPY servers/python/snap_interop_server /app/snap_interop_server
 
+# The server never installs packages at runtime. Drop pip (the base image's and
+# the upgraded one copied from the build stage) so its vendored libraries do not
+# ship in the image.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+      /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+      /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12
+
 # Allow binding port 102 without a permanent root process when the kernel honors file caps.
 RUN setcap 'cap_net_bind_service=+ep' /usr/local/bin/python3.12 || true
 

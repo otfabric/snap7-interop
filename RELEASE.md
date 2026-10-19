@@ -23,7 +23,7 @@ Dependency and security refresh. The fixtures, the container contract and the
 interop results are unchanged.
 
 - **Pure-Python server**: `python-snap7` bumped from `3.0.0` to `3.2.1`. The adapter's `_read_from_memory_area` override now returns the item return code with the data, as 3.2 expects. All 15 canonical fixtures give the same results as on `3.0.0`.
-- **Image security**: both runtime images apply Debian security updates at build time, which clears the fixable critical `perl-base` CVEs (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) the image scan reported.
+- **Image security**: both runtime images apply Debian security updates at build time, which clears the fixable critical `perl-base` CVEs (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) the image scan reported. The Python image no longer ships `pip`, whose vendored `urllib3`, `msgpack` and `setuptools` carried fixable high CVEs; the server never installs packages at runtime.
 - **Docs**: the project is named snap7-interop throughout, and go-s7comm links point at its `main` branch.
 
 ## Pins
