@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from snap_interop_server import __version__
-from snap_interop_server.fixture import CompiledFixture
+from snap7_interop_server import __version__
+from snap7_interop_server.fixture import CompiledFixture
 
 
 @dataclass

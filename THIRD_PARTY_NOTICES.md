@@ -11,7 +11,7 @@ images and tooling. It must remain present before any published release.
 | Source | https://github.com/SCADACS/snap7 |
 | Pin | `f6ff90317ca5d54250f4dcd29209689a74e26d82` (see `versions.yaml`) |
 | License | LGPL-3.0-or-later |
-| Used by | `ghcr.io/otfabric/snap-interop-native` (dynamically linked `libsnap7.so`) |
+| Used by | `ghcr.io/otfabric/snap7-interop-native` (dynamically linked `libsnap7.so`) |
 
 The LGPL-3.0 text is copied into the native runtime image at
 `/usr/share/doc/snap7/lgpl-3.0.txt`. Corresponding upstream notices (`lgpl-3.0.txt`,
@@ -29,7 +29,7 @@ Foundation, either version 3 of the License, or (at your option) any later versi
 | Source | https://github.com/gijzelaerr/python-snap7 |
 | Pin | `3.2.1` (see `versions.yaml`) |
 | License | MIT |
-| Used by | `ghcr.io/otfabric/snap-interop-python` (pure-Python; no native `libsnap7`) |
+| Used by | `ghcr.io/otfabric/snap7-interop-python` (pure-Python; no native `libsnap7`) |
 
 Copyright (c) 2013 Gijs Molenaar, Stephan Preeker
 

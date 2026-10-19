@@ -7,7 +7,7 @@
 #   make python && docker compose --profile python up -d
 #   make probe / PROBE_ADDR=127.0.0.1:2102 make probe
 
-name: snap-interop
+name: snap7-interop
 
 services:
   native:
@@ -17,7 +17,7 @@ services:
       dockerfile: servers/native/Dockerfile
       platforms:
         - linux/amd64
-    image: snap-interop-native:local
+    image: snap7-interop-native:local
     platform: linux/amd64
     environment:
       SNAP_INTEROP_FIXTURE: /fixtures/basic-db.compiled.json
@@ -51,7 +51,7 @@ services:
     build:
       context: .
       dockerfile: servers/python/Dockerfile
-    image: snap-interop-python:local
+    image: snap7-interop-python:local
     environment:
       SNAP_INTEROP_FIXTURE: /fixtures/basic-db.compiled.json
       SNAP_INTEROP_LISTEN_ADDRESS: "0.0.0.0"

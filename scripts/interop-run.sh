@@ -8,8 +8,8 @@ cd "${root}"
 export GOWORK="${GOWORK:-off}"
 DOCKER="${DOCKER:-docker}"
 PROBE="${PROBE:-bin/interop-probe}"
-NATIVE_IMAGE="${NATIVE_IMAGE:-snap-interop-native:local}"
-PYTHON_IMAGE="${PYTHON_IMAGE:-snap-interop-python:local}"
+NATIVE_IMAGE="${NATIVE_IMAGE:-snap7-interop-native:local}"
+PYTHON_IMAGE="${PYTHON_IMAGE:-snap7-interop-python:local}"
 
 FIXTURE="${FIXTURE:-}"
 if [[ -n "${FIXTURE}" ]]; then

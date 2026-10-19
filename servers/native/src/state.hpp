@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace snap_interop {
+namespace snap7_interop {
 
 struct RuntimeCounters {
   uint64_t accepted_writes = 0;
@@ -16,4 +16,4 @@ void WriteStateSnapshot(const std::string& path,
                         const std::string& status,
                         const RuntimeCounters& counters);
 
-}  // namespace snap_interop
+}  // namespace snap7_interop

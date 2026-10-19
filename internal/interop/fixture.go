@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/otfabric/snap-interop/internal/s7client"
+	"github.com/otfabric/snap7-interop/internal/s7client"
 )
 
 // CompiledFixture is the subset of the compiled fixture needed by the runner.

@@ -107,7 +107,7 @@ func junitReport(rep Report) string {
 	name := xmlEscape(rep.FixtureID)
 	var body strings.Builder
 	fmt.Fprintf(&body, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
-	fmt.Fprintf(&body, `<testsuite name="snap-interop" tests="1" failures="%d" skipped="%d" timestamp="%s">`+"\n",
+	fmt.Fprintf(&body, `<testsuite name="snap7-interop" tests="1" failures="%d" skipped="%d" timestamp="%s">`+"\n",
 		failures, skipped, xmlEscape(rep.GeneratedAt))
 	fmt.Fprintf(&body, `  <testcase classname="interop" name="%s">`+"\n", name)
 	switch rep.Status {

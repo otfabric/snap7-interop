@@ -15,8 +15,8 @@ permissions:
 env:
   GOWORK: "off"
   REGISTRY: ghcr.io
-  NATIVE_IMAGE: ghcr.io/otfabric/snap-interop-native
-  PYTHON_IMAGE: ghcr.io/otfabric/snap-interop-python
+  NATIVE_IMAGE: ghcr.io/otfabric/snap7-interop-native
+  PYTHON_IMAGE: ghcr.io/otfabric/snap7-interop-python
 
 jobs:
   release:
@@ -59,13 +59,13 @@ jobs:
 
       - name: Build amd64 images for pre-publish scan
         run: |
-          docker build --platform=linux/amd64 -f servers/native/Dockerfile -t snap-interop-native:release-scan .
-          docker build --platform=linux/amd64 -f servers/python/Dockerfile -t snap-interop-python:release-scan .
+          docker build --platform=linux/amd64 -f servers/native/Dockerfile -t snap7-interop-native:release-scan .
+          docker build --platform=linux/amd64 -f servers/python/Dockerfile -t snap7-interop-python:release-scan .
 
       - name: Scan native (fixable CRITICAL,HIGH block release)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: snap-interop-native:release-scan
+          image-ref: snap7-interop-native:release-scan
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
@@ -74,7 +74,7 @@ jobs:
       - name: Scan python (fixable CRITICAL,HIGH block release)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: snap-interop-python:release-scan
+          image-ref: snap7-interop-python:release-scan
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
@@ -132,7 +132,7 @@ jobs:
         run: |
           mkdir -p dist/release
           {
-            echo "snap_interop: ${{ steps.meta.outputs.version }}"
+            echo "snap7_interop: ${{ steps.meta.outputs.version }}"
             echo "git_sha: ${{ github.sha }}"
             echo "native_image: ${NATIVE_IMAGE}"
             echo "native_tag: ${{ steps.meta.outputs.tag }}"

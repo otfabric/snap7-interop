@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/otfabric/snap-interop/internal/s7client"
+	"github.com/otfabric/snap7-interop/internal/s7client"
 )
 
 // StepResult is the outcome of one expectation on one endpoint.

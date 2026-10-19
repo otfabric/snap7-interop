@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from snap7.type import Parameter, SrvArea
 
-from snap_interop_server.fixture import AreaBuffer, CompiledFixture
-from snap_interop_server.server import InteropServer
+from snap7_interop_server.fixture import AreaBuffer, CompiledFixture
+from snap7_interop_server.server import InteropServer
 
 
 class Snap7ServerAdapter:

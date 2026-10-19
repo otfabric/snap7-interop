@@ -57,3 +57,4 @@ docker.tar
 credentials.json
 *.pem
 *.key
+*.egg-info/

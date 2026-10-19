@@ -2,7 +2,7 @@
 
 Pure-Python S7 server adapter built on pinned `python-snap7==3.2.1`.
 
-Published image: `ghcr.io/otfabric/snap-interop-python`.
+Published image: `ghcr.io/otfabric/snap7-interop-python`.
 
 Scope, fixture catalog, and out-of-scope topics:
 [repository README](../../README.md). Compatibility notes:
@@ -20,8 +20,8 @@ SNAP_INTEROP_LOG_FORMAT
 SNAP_INTEROP_STATE_PATH
 ```
 
-Upstream calls are isolated in `snap_interop_server.adapter` /
-`snap_interop_server.server.InteropServer` (OOR, bit mask, read-only reject).
+Upstream calls are isolated in `snap7_interop_server.adapter` /
+`snap7_interop_server.server.InteropServer` (OOR, bit mask, read-only reject).
 
 The image must not load the native Snap7 shared library (enforced at image build
 and in `tests/test_no_native_lib.py`).

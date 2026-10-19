@@ -5,7 +5,7 @@
 
 #include <nlohmann/json.hpp>
 
-namespace snap_interop {
+namespace snap7_interop {
 namespace {
 
 std::vector<uint8_t> DecodeBase64(const std::string& in) {
@@ -93,4 +93,4 @@ CompiledFixture LoadCompiledFixture(const std::string& path) {
   return fx;
 }
 
-}  // namespace snap_interop
+}  // namespace snap7_interop

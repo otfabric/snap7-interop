@@ -60,7 +60,7 @@ require_dir fixtures/compiled
 require_dir tooling/fixturectl
 require_dir tooling/interop-probe
 require_dir servers/native/src
-require_dir servers/python/snap_interop_server
+require_dir servers/python/snap7_interop_server
 require_dir tests/conformance
 require_dir tests/integration
 require_dir tests/golden
@@ -76,7 +76,7 @@ require_file internal/s7client/client.go
 require_file scripts/interop-run.sh
 require_file servers/native/src/main.cpp
 require_file servers/native/CMakeLists.txt
-require_file servers/python/snap_interop_server/main.py
+require_file servers/python/snap7_interop_server/main.py
 require_file servers/python/requirements.txt
 require_file servers/python/tests/test_no_native_lib.py
 

@@ -45,8 +45,8 @@ scan_image() {
     "${image}" || true
 }
 
-scan_image "${NATIVE_IMAGE:-snap-interop-native:local}" native
-scan_image "${PYTHON_IMAGE:-snap-interop-python:local}" python
+scan_image "${NATIVE_IMAGE:-snap7-interop-native:local}" native
+scan_image "${PYTHON_IMAGE:-snap7-interop-python:local}" python
 
 echo "Scan reports under ${OUT}/"
 ls -la "${OUT}"

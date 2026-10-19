@@ -1,4 +1,4 @@
-"""Entry point for the pure-Python snap-interop server."""
+"""Entry point for the pure-Python snap7-interop server."""
 
 from __future__ import annotations
 
@@ -7,10 +7,10 @@ import signal
 import sys
 import threading
 
-from snap_interop_server.adapter import Snap7ServerAdapter
-from snap_interop_server.fixture import load_compiled_fixture
-from snap_interop_server.log import log_event
-from snap_interop_server.state import RuntimeCounters, write_state_snapshot
+from snap7_interop_server.adapter import Snap7ServerAdapter
+from snap7_interop_server.fixture import load_compiled_fixture
+from snap7_interop_server.log import log_event
+from snap7_interop_server.state import RuntimeCounters, write_state_snapshot
 
 
 def _env(name: str, default: str | None = None) -> str:

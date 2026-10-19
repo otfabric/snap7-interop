@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/otfabric/snap-interop/internal/interop"
-	"github.com/otfabric/snap-interop/internal/s7client"
+	"github.com/otfabric/snap7-interop/internal/interop"
+	"github.com/otfabric/snap7-interop/internal/s7client"
 )
 
 func TestCompareEndpointsDetectsByteMismatch(t *testing.T) {

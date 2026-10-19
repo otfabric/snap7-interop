@@ -1,2 +1,0 @@
-[console_scripts]
-snap-interop-python = snap_interop_server.main:main

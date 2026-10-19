@@ -3,7 +3,7 @@ package interop
 import (
 	"fmt"
 
-	"github.com/otfabric/snap-interop/internal/s7client"
+	"github.com/otfabric/snap7-interop/internal/s7client"
 )
 
 // Diff describes a divergence between two endpoint step results.

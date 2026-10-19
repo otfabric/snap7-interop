@@ -15,8 +15,8 @@ INVALID    := $(wildcard fixtures/invalid/*.json)
 
 PROBE      := $(BIN_DIR)/interop-probe
 DOCKER    ?= docker
-NATIVE_IMAGE ?= snap-interop-native:local
-PYTHON_IMAGE ?= snap-interop-python:local
+NATIVE_IMAGE ?= snap7-interop-native:local
+PYTHON_IMAGE ?= snap7-interop-python:local
 PROBE_ADDR ?= 127.0.0.1:1102
 PYTHON_DIR := servers/python
 
@@ -151,7 +151,7 @@ python: ## Build pure-Python server image (BUILD_PLATFORM optional override)
 images: native python ## Build both server images
 	@echo "images: native and python built"
 
-# IMAGE_TAG defaults to versions.yaml snap_interop (e.g. 0.1.0 → tags v0.1.0 and 0.1.0).
+# IMAGE_TAG defaults to versions.yaml snap7_interop (e.g. 0.1.0 → tags v0.1.0 and 0.1.0).
 # Requires: docker login ghcr.io (write:packages). Public package visibility set in GHCR UI.
 publish: ## Multi-arch build + push both images to ghcr.io/otfabric
 	@chmod +x scripts/publish.sh
@@ -186,7 +186,7 @@ _smoke-run:
 	echo "started $$cid"; \
 	ok=0; \
 	for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
-		if $(PROBE) -addr 127.0.0.1:$(HOST_PORT) -db 1 -offset 0 -length 8 -expect-hex 0102030405060708 >/tmp/snap-interop-probe.out 2>&1; then \
+		if $(PROBE) -addr 127.0.0.1:$(HOST_PORT) -db 1 -offset 0 -length 8 -expect-hex 0102030405060708 >/tmp/snap7-interop-probe.out 2>&1; then \
 			ok=1; break; \
 		fi; \
 		sleep 1; \
@@ -194,11 +194,11 @@ _smoke-run:
 	if [ "$$ok" -ne 1 ]; then \
 		echo "FAIL: $(LABEL) smoke read"; \
 		$(DOCKER) logs "$$cid" || true; \
-		cat /tmp/snap-interop-probe.out || true; \
+		cat /tmp/snap7-interop-probe.out || true; \
 		$(DOCKER) stop "$$cid" >/dev/null || true; \
 		exit 1; \
 	fi; \
-	cat /tmp/snap-interop-probe.out; \
+	cat /tmp/snap7-interop-probe.out; \
 	$(PROBE) -addr 127.0.0.1:$(HOST_PORT) -db 1 -offset 8 -length 4 -write-hex deadbeef; \
 	$(DOCKER) stop "$$cid" >/dev/null; \
 	echo "smoke-$(LABEL) passed"

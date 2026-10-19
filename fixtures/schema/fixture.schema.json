@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/otfabric/snap-interop/fixtures/schema/fixture.schema.json",
-  "title": "snap-interop source fixture",
-  "description": "Implementation-neutral source fixture for snap-interop dual servers.\n\nAuthoring rules:\n- Declare only observable memory and black-box expectations; never encode adapter-specific quirks.\n- Typed scalars go in area.values; the canonical compiler encodes them to bytes. Adapters must not re-interpret types.\n- List every needed capability in requires so unsupported servers skip explicitly instead of silently downgrading.\n- Prefer hex payloads in expectations for stable goldens.\n- Document classified differences in notes and docs/compatibility.md, not by weakening expectations.\n\nWorkflow: author under fixtures/canonical/, then make fixtures-update && make fixtures-check, then FIXTURE=<id> make interop.",
+  "$id": "https://github.com/otfabric/snap7-interop/fixtures/schema/fixture.schema.json",
+  "title": "snap7-interop source fixture",
+  "description": "Implementation-neutral source fixture for snap7-interop dual servers.\n\nAuthoring rules:\n- Declare only observable memory and black-box expectations; never encode adapter-specific quirks.\n- Typed scalars go in area.values; the canonical compiler encodes them to bytes. Adapters must not re-interpret types.\n- List every needed capability in requires so unsupported servers skip explicitly instead of silently downgrading.\n- Prefer hex payloads in expectations for stable goldens.\n- Document classified differences in notes and docs/compatibility.md, not by weakening expectations.\n\nWorkflow: author under fixtures/canonical/, then make fixtures-update && make fixtures-check, then FIXTURE=<id> make interop.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "id", "description", "server", "areas"],

@@ -145,7 +145,7 @@ jobs:
       - name: Scan native (fixable CRITICAL blocks PR)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: snap-interop-native:local
+          image-ref: snap7-interop-native:local
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: "1"
@@ -154,7 +154,7 @@ jobs:
       - name: Scan python (fixable CRITICAL blocks PR)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: snap-interop-python:local
+          image-ref: snap7-interop-python:local
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: "1"
