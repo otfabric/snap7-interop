@@ -13,7 +13,7 @@ native_snap7:
 
 python_snap7:
   package: "python-snap7"
-  version: "3.0.0"
+  version: "3.2.1"
   extras: []
   note: "Pure-Python Server API (snap7.server.Server). Image must not load libsnap7."
 

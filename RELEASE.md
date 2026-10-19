@@ -4,7 +4,8 @@
 
 ### Summary
 
-- (none yet)
+- Pure-Python server: `python-snap7` bumped from `3.0.0` to `3.2.1`. The adapter's `_read_from_memory_area` override now returns the item return code with the data, as 3.2 expects.
+- Both runtime images apply Debian security updates at build time, which clears the fixable critical `perl-base` CVEs the image scan reports.
 
 ### Breaking changes
 

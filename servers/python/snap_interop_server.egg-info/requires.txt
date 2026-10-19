@@ -1,1 +1,1 @@
-python-snap7==3.0.0
+python-snap7==3.2.1

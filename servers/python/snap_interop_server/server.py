@@ -52,15 +52,16 @@ class InteropServer(Server):
 
     def _read_from_memory_area(
         self, area: S7Area, db_number: int, start: int, count: int
-    ) -> bytearray | None:
+    ) -> tuple[int, bytearray]:
+        """Return the item return code and the data, as python-snap7 3.2 does."""
         area_key = (area, db_number)
         if area_key not in self.memory_areas:
-            return None
+            return _RC_NOT_AVAILABLE, bytearray()
         with self.area_locks[area_key]:
             area_data = self.memory_areas[area_key]
             if start < 0 or count < 0 or start + count > len(area_data):
-                return None
-            return bytearray(area_data[start : start + count])
+                return _RC_OUT_OF_RANGE, bytearray()
+            return _RC_SUCCESS, bytearray(area_data[start : start + count])
 
     def _write_to_memory_area(
         self, area: S7Area, db_number: int, start: int, write_data: bytearray
@@ -91,10 +92,8 @@ class InteropServer(Server):
             if word_len == S7WordLen.BIT:
                 return self._handle_bit_read(request, area, db_number, addr_spec)
 
-            read_data = self._read_from_memory_area(area, db_number, start, count)
-            if read_data is None:
-                area_key = (area, db_number)
-                code = _RC_NOT_AVAILABLE if area_key not in self.memory_areas else _RC_OUT_OF_RANGE
+            code, read_data = self._read_from_memory_area(area, db_number, start, count)
+            if code != _RC_SUCCESS:
                 return self._item_error_read_response(request, code)
 
             data_len = 4 + len(read_data)

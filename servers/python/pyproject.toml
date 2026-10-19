@@ -5,7 +5,7 @@ description = "Pure-Python snap-interop S7 server adapter"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-  "python-snap7==3.0.0",
+  "python-snap7==3.2.1",
 ]
 
 [project.scripts]
