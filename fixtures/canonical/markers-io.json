@@ -6,7 +6,7 @@
   "description": "Markers, inputs and outputs for ReadMerkers/ReadInputs/ReadOutputs",
   "tags": ["markers", "inputs", "outputs", "go-s7comm"],
   "requires": ["area.markers", "area.inputs", "area.outputs", "operation.read", "operation.write"],
-  "references": ["https://github.com/otfabric/go-s7comm/blob/refactor/cotp-tp0-service/API.md#readwrite-api"],
+  "references": ["https://github.com/otfabric/go-s7comm/blob/main/API.md#readwrite-api"],
   "server": { "rack": 0, "slot": 2, "pduSize": 480 },
   "areas": [
     {
