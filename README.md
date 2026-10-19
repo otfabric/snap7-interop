@@ -1,4 +1,4 @@
-# snap-interop
+# snap7-interop
 
 [![CI](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml/badge.svg)](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -306,7 +306,7 @@ Typed values are compiled once into canonical bytes. Adapters do not encode type
 
 | Owns | Component |
 | --- | --- |
-| `snap-interop` | Images, fixtures, compiler, dual-server equivalence |
+| `snap7-interop` | Images, fixtures, compiler, dual-server equivalence |
 | `go-s7comm` | Client API assertions, client CI matrix, digest pins |
 
 ```text
@@ -321,7 +321,7 @@ go-s7comm CI
 ## Repository layout
 
 ```text
-snap-interop/
+snap7-interop/
 ├── README.md / RELEASE.md / SECURITY.md / THIRD_PARTY_NOTICES.md / CONTRIBUTING.md
 ├── Makefile / compose.yaml / versions.yaml
 ├── fixtures/{schema,canonical,invalid,compiled}/

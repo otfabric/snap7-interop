@@ -16,7 +16,7 @@ regressions become entangled and the repository is not independently useful.
 
 ## Decision
 
-`snap-interop` owns an independent probe (`interop-probe`) that:
+`snap7-interop` owns an independent probe (`interop-probe`) that:
 
 - starts or connects to both servers;
 - executes fixture expectations;

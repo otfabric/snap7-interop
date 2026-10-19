@@ -10,7 +10,7 @@ Accepted
 
 ## Context
 
-`snap-interop` must drive two independent S7 server implementations from one
+`snap7-interop` must drive two independent S7 server implementations from one
 contract and later serve as a reusable test target for clients such as
 `go-s7comm`. If adapters invent their own initialization or typed encoding, the
 repository cannot prove equivalence.

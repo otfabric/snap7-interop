@@ -1,4 +1,4 @@
-# snap-interop Python server
+# snap7-interop Python server
 
 Pure-Python S7 server adapter built on pinned `python-snap7==3.0.0`.
 

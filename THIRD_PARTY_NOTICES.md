@@ -1,6 +1,6 @@
 # Third-party notices
 
-This file lists third-party software incorporated into `snap-interop` server
+This file lists third-party software incorporated into `snap7-interop` server
 images and tooling. It must remain present before any published release.
 
 ## Snap7 (native server image)

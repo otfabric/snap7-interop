@@ -1,4 +1,4 @@
-# snap-interop Releases
+# snap7-interop Releases
 
 ## Unreleased
 

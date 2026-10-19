@@ -1,4 +1,4 @@
-# Contributing to otfabric/snap-interop
+# Contributing to otfabric/snap7-interop
 
 Thank you for your interest in contributing.
 
