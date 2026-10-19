@@ -18,9 +18,12 @@ env:
   NATIVE_IMAGE: ghcr.io/otfabric/snap7-interop-native
   PYTHON_IMAGE: ghcr.io/otfabric/snap7-interop-python
 
+# Each image is built on a runner of its own architecture (no QEMU), in
+# parallel, and pushed by digest. The merge job joins the two digests of an
+# image into one multi-arch manifest list under the release tags and signs it.
 jobs:
-  release:
-    name: publish
+  verify:
+    name: verify
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,8 +34,38 @@ jobs:
         with:
           go-version: "1.23.x"
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
+      - name: Notices + CI
+        run: |
+          chmod +x scripts/check-notices.sh
+          ./scripts/check-notices.sh
+          make ci
+
+  build:
+    name: build ${{ matrix.image }} (${{ matrix.arch }})
+    needs: verify
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [native, python]
+        arch: [amd64, arm64]
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Resolve image
+        id: img
+        run: |
+          case "${{ matrix.image }}" in
+            native) echo "name=${NATIVE_IMAGE}" >> "$GITHUB_OUTPUT" ;;
+            python) echo "name=${PYTHON_IMAGE}" >> "$GITHUB_OUTPUT" ;;
+          esac
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -44,102 +77,149 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve version
-        id: meta
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+      - name: Build for pre-publish scan
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: servers/${{ matrix.image }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          provenance: false
+          sbom: false
+          tags: snap7-interop-${{ matrix.image }}:release-scan
 
-      - name: Notices + CI
-        run: |
-          chmod +x scripts/check-notices.sh
-          ./scripts/check-notices.sh
-          make ci
-
-      - name: Build amd64 images for pre-publish scan
-        run: |
-          docker build --platform=linux/amd64 -f servers/native/Dockerfile -t snap7-interop-native:release-scan .
-          docker build --platform=linux/amd64 -f servers/python/Dockerfile -t snap7-interop-python:release-scan .
-
-      - name: Scan native (fixable CRITICAL,HIGH block release)
+      - name: Scan (fixable CRITICAL,HIGH block release)
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: snap7-interop-native:release-scan
+          image-ref: snap7-interop-${{ matrix.image }}:release-scan
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
           format: table
 
-      - name: Scan python (fixable CRITICAL,HIGH block release)
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: snap7-interop-python:release-scan
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
-          exit-code: "1"
-          format: table
-
-      - name: Build and push native (multi-arch)
-        id: native
+      # Same builder, so this reuses the layers of the scanned build.
+      - name: Push by digest
+        id: push
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: servers/native/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
+          file: servers/${{ matrix.image }}/Dockerfile
+          platforms: linux/${{ matrix.arch }}
           provenance: true
           sbom: true
-          tags: |
-            ${{ env.NATIVE_IMAGE }}:${{ steps.meta.outputs.tag }}
-            ${{ env.NATIVE_IMAGE }}:${{ steps.meta.outputs.version }}
+          outputs: type=image,name=${{ steps.img.outputs.name }},push-by-digest=true,name-canonical=true,push=true
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.version=${{ steps.img.outputs.version }}
             org.opencontainers.image.vendor=otfabric
 
-      - name: Build and push python (multi-arch)
-        id: python
-        uses: docker/build-push-action@v7
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.push.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
         with:
-          context: .
-          file: servers/python/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: true
-          sbom: true
-          tags: |
-            ${{ env.PYTHON_IMAGE }}:${{ steps.meta.outputs.tag }}
-            ${{ env.PYTHON_IMAGE }}:${{ steps.meta.outputs.version }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
-            org.opencontainers.image.vendor=otfabric
+          name: digest-${{ matrix.image }}-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: merge ${{ matrix.image }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [native, python]
+    outputs:
+      native_digest: ${{ steps.export.outputs.native_digest }}
+      python_digest: ${{ steps.export.outputs.python_digest }}
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digest-${{ matrix.image }}-*
+          merge-multiple: true
+
+      - name: Resolve image
+        id: img
+        run: |
+          case "${{ matrix.image }}" in
+            native) echo "name=${NATIVE_IMAGE}" >> "$GITHUB_OUTPUT" ;;
+            python) echo "name=${PYTHON_IMAGE}" >> "$GITHUB_OUTPUT" ;;
+          esac
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest list
+        working-directory: /tmp/digests
+        env:
+          IMAGE: ${{ steps.img.outputs.name }}
+          VERSION: ${{ steps.img.outputs.version }}
+        run: |
+          test "$(ls | wc -l)" -eq 2
+          docker buildx imagetools create \
+            -t "${IMAGE}:${GITHUB_REF_NAME}" \
+            -t "${IMAGE}:${VERSION}" \
+            $(printf "${IMAGE}@sha256:%s " *)
+          docker buildx imagetools inspect "${IMAGE}:${GITHUB_REF_NAME}"
+
+      - name: Resolve manifest list digest
+        id: export
+        env:
+          IMAGE: ${{ steps.img.outputs.name }}
+        run: |
+          digest="$(docker buildx imagetools inspect "${IMAGE}:${GITHUB_REF_NAME}" --format '{{json .Manifest}}' | jq -r .digest)"
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "${{ matrix.image }}_digest=${digest}" >> "$GITHUB_OUTPUT"
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v4.1.2
 
-      - name: Sign images (keyless)
+      - name: Sign image (keyless)
         env:
           COSIGN_YES: "true"
-        run: |
-          cosign sign --yes "${NATIVE_IMAGE}@${{ steps.native.outputs.digest }}"
-          cosign sign --yes "${PYTHON_IMAGE}@${{ steps.python.outputs.digest }}"
+          IMAGE: ${{ steps.img.outputs.name }}
+        run: cosign sign --yes "${IMAGE}@${{ steps.export.outputs.digest }}"
+
+  publish:
+    name: publish
+    needs: merge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Write release manifest
+        env:
+          NATIVE_DIGEST: ${{ needs.merge.outputs.native_digest }}
+          PYTHON_DIGEST: ${{ needs.merge.outputs.python_digest }}
         run: |
+          test -n "${NATIVE_DIGEST}" && test -n "${PYTHON_DIGEST}"
           mkdir -p dist/release
           {
-            echo "snap7_interop: ${{ steps.meta.outputs.version }}"
+            echo "snap7_interop: ${GITHUB_REF_NAME#v}"
             echo "git_sha: ${{ github.sha }}"
             echo "native_image: ${NATIVE_IMAGE}"
-            echo "native_tag: ${{ steps.meta.outputs.tag }}"
-            echo "native_digest: ${{ steps.native.outputs.digest }}"
+            echo "native_tag: ${GITHUB_REF_NAME}"
+            echo "native_digest: ${NATIVE_DIGEST}"
             echo "python_image: ${PYTHON_IMAGE}"
-            echo "python_tag: ${{ steps.meta.outputs.tag }}"
-            echo "python_digest: ${{ steps.python.outputs.digest }}"
+            echo "python_tag: ${GITHUB_REF_NAME}"
+            echo "python_digest: ${PYTHON_DIGEST}"
           } > dist/release/images.txt
           cp versions.yaml dist/release/versions.yaml
           cp THIRD_PARTY_NOTICES.md dist/release/THIRD_PARTY_NOTICES.md

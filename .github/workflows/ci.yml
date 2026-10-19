@@ -91,8 +91,18 @@ jobs:
           path: dist/sbom/
 
   native-smoke:
-    name: native-smoke
-    runs-on: ubuntu-latest
+    name: native-smoke${{ matrix.arch == 'arm64' && ' (arm64)' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
     needs: ci
     steps:
       - name: Checkout
@@ -110,8 +120,18 @@ jobs:
         run: make smoke-native
 
   python-smoke:
-    name: python-smoke
-    runs-on: ubuntu-latest
+    name: python-smoke${{ matrix.arch == 'arm64' && ' (arm64)' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
     needs: ci
     steps:
       - name: Checkout
@@ -129,8 +149,18 @@ jobs:
         run: make smoke-python
 
   scan:
-    name: scan
-    runs-on: ubuntu-latest
+    name: scan${{ matrix.arch == 'arm64' && ' (arm64)' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
     needs: [native-smoke, python-smoke]
     steps:
       - name: Checkout
@@ -161,8 +191,18 @@ jobs:
           format: table
 
   interop:
-    name: interop
-    runs-on: ubuntu-latest
+    name: interop${{ matrix.arch == 'arm64' && ' (arm64)' || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-latest
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
     needs: [native-smoke, python-smoke]
     steps:
       - name: Checkout
@@ -183,6 +223,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: interop-reports
+          name: interop-reports-${{ matrix.arch }}
           path: reports/
           if-no-files-found: ignore

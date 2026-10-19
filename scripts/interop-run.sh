@@ -10,6 +10,9 @@ DOCKER="${DOCKER:-docker}"
 PROBE="${PROBE:-bin/interop-probe}"
 NATIVE_IMAGE="${NATIVE_IMAGE:-snap7-interop-native:local}"
 PYTHON_IMAGE="${PYTHON_IMAGE:-snap7-interop-python:local}"
+# Same default as the Makefile; set BUILD_PLATFORM=linux/arm64 on an arm64 host.
+BUILD_PLATFORM="${BUILD_PLATFORM:-linux/amd64}"
+export BUILD_PLATFORM
 
 FIXTURE="${FIXTURE:-}"
 if [[ -n "${FIXTURE}" ]]; then
@@ -37,7 +40,7 @@ for fixture in "${fixtures[@]}"; do
   report_dir="reports/${id}"
   mkdir -p "${report_dir}"
 
-  native_cid="$("${DOCKER}" run -d --rm --platform=linux/amd64 \
+  native_cid="$("${DOCKER}" run -d --rm --platform="${BUILD_PLATFORM}" \
     -p 1102:102 \
     -v "${root}/fixtures/compiled:/fixtures:ro" \
     --read-only \
@@ -46,7 +49,7 @@ for fixture in "${fixtures[@]}"; do
     --cap-drop ALL --cap-add NET_BIND_SERVICE \
     -e "SNAP_INTEROP_FIXTURE=/fixtures/${id}.compiled.json" \
     "${NATIVE_IMAGE}")"
-  python_cid="$("${DOCKER}" run -d --rm \
+  python_cid="$("${DOCKER}" run -d --rm --platform="${BUILD_PLATFORM}" \
     -p 2102:102 \
     -v "${root}/fixtures/compiled:/fixtures:ro" \
     --read-only \
