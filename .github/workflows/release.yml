@@ -34,6 +34,12 @@ jobs:
         with:
           go-version: "1.23.x"
 
+      # The release body is the section of this tag in RELEASE.md, up to its
+      # "---" line. Check it before anything is built or pushed.
+      - name: RELEASE.md has the notes of the tag
+        run: |
+          scripts/release-notes.sh "${GITHUB_REF_NAME}" > /dev/null || { echo "::error::RELEASE.md has no notes for ${GITHUB_REF_NAME}"; exit 1; }
+
       - name: Notices + CI
         run: |
           chmod +x scripts/check-notices.sh
@@ -233,9 +239,37 @@ jobs:
           format: spdx-json
           output-file: dist/release/source.spdx.json
 
+      # The body is the section of this version in RELEASE.md (up to its
+      # "---", as in every otfabric repository), followed by the images.
+      - name: Write the release body
+        env:
+          NATIVE_DIGEST: ${{ needs.merge.outputs.native_digest }}
+          PYTHON_DIGEST: ${{ needs.merge.outputs.python_digest }}
+        run: |
+          {
+            scripts/release-notes.sh "${GITHUB_REF_NAME}"
+            echo
+            echo "## Images"
+            echo
+            echo "| Image | Digest |"
+            echo "|-------|--------|"
+            echo "| \`${NATIVE_IMAGE}:${GITHUB_REF_NAME}\` | \`${NATIVE_DIGEST}\` |"
+            echo "| \`${PYTHON_IMAGE}:${GITHUB_REF_NAME}\` | \`${PYTHON_DIGEST}\` |"
+            echo
+            echo "## Pinning in a consumer"
+            echo
+            echo '```bash'
+            echo "docker pull ${NATIVE_IMAGE}@${NATIVE_DIGEST}"
+            echo "docker pull ${PYTHON_IMAGE}@${PYTHON_DIGEST}"
+            echo '```'
+            echo
+            echo "\`images.txt\` and \`versions.yaml\` record the images and the upstream pins they were built from. The native image contains Snap7 (LGPL-3.0-or-later), the Python image python-snap7 (MIT); see \`THIRD_PARTY_NOTICES.md\`."
+          } > "${RUNNER_TEMP}/release-body.md"
+          cat "${RUNNER_TEMP}/release-body.md"
+
       - name: Upload release artifacts
         uses: softprops/action-gh-release@v3
         with:
+          body_path: ${{ runner.temp }}/release-body.md
           files: |
             dist/release/**
-          generate_release_notes: true

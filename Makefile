@@ -39,8 +39,9 @@ fmt: ## Format Go and other available trees
 
 lint: ## Lint bootstrap contracts, shell scripts and Go packages
 	@echo "Running bootstrap-check"
-	@chmod +x scripts/bootstrap-check.sh scripts/check-notices.sh scripts/sbom.sh scripts/scan.sh scripts/publish.sh
+	@chmod +x scripts/bootstrap-check.sh scripts/check-notices.sh scripts/sbom.sh scripts/scan.sh scripts/publish.sh scripts/release-notes.sh
 	@./scripts/bootstrap-check.sh
+	@scripts/release-notes.sh > /dev/null && echo "ok   RELEASE.md has the notes of snap7_interop"
 	@./scripts/check-notices.sh
 	@if command -v shellcheck >/dev/null 2>&1; then \
 		echo "Running shellcheck"; \

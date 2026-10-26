@@ -1,10 +1,29 @@
 # snap7-interop Releases
 
+## How a release is made
+
+1. Rename **Unreleased** below to `## vX.Y.Z` (with `**Date:**` and `**Previous release:**`), and set `snap7_interop` in `versions.yaml` to the same version, in one change. `make lint` (and so `make ci` and CI) fails when RELEASE.md has no notes for `snap7_interop`.
+2. `make ci` on the commit to release.
+3. Tag `vX.Y.Z` and push the tag. The release workflow checks the notes of the tag first, then runs `make ci`, builds each image on a native amd64 and arm64 runner, scans it, pushes it by digest, joins the two digests into one signed multi-arch manifest list under `vX.Y.Z` and `X.Y.Z`, and creates the GitHub release with `images.txt`, `versions.yaml`, `THIRD_PARTY_NOTICES.md`, a source SBOM and `SHA256SUMS`.
+4. Consumers pin the digests from the release body or `images.txt`.
+
+The notes are the body of the GitHub release, followed by the image digests:
+everything after the heading `## vX.Y.Z` up to the next line that is exactly
+`---` (`scripts/release-notes.sh vX.Y.Z` prints it). This is the format of
+every otfabric repository and the rule of the shared release workflow, so:
+one section per version, newest first, each ending with a `---` line, and no
+`---` line inside a section.
+
+Tags are immutable. A fix is a new version.
+
+---
+
 ## Unreleased
 
 ### Summary
 
 - **CI and release run on native runners**: each architecture builds on its own GitHub runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64) in parallel, with no QEMU emulation. CI now also smoke-tests, scans and runs interop on arm64. The release pushes each image and architecture by digest, then joins them into one signed multi-arch manifest list under the release tags. Both architectures are scanned for fixable CRITICAL and HIGH findings before anything is tagged.
+- **Release notes come from RELEASE.md**, as in every otfabric repository: the section of the tag, up to its `---` line, is the body of the GitHub release, followed by the image digests and pin snippets. `scripts/release-notes.sh` extracts it; `make lint`, CI and the release workflow fail when the notes of the version are missing.
 
 ### Breaking changes
 

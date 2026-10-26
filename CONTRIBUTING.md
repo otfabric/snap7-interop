@@ -74,10 +74,14 @@ downstream. See README “Published images”.
 ## Releases
 
 1. Move notes from **Unreleased** into a new `## vX.Y.Z` section in
-   [RELEASE.md](RELEASE.md) (Summary, Breaking changes, pins if relevant).
+   [RELEASE.md](RELEASE.md) (Summary, Breaking changes, pins if relevant),
+   ending with a `---` line. That section, up to its `---`, is the body of the
+   GitHub release (`scripts/release-notes.sh vX.Y.Z` prints it).
 2. Bump `snap7_interop` in `versions.yaml` (and README badge / pull examples).
-3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` publishes GHCR images
-   and attaches release artifacts.
+   `make lint` and CI fail when RELEASE.md has no notes for it.
+3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` checks the notes,
+   publishes GHCR images and creates the release with those notes, the image
+   digests and the release artifacts.
 
 ## Security
 
