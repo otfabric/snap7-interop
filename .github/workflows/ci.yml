@@ -38,6 +38,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y shellcheck
 
+      - name: RELEASE.md has the notes of snap7_interop
+        run: scripts/release-notes.sh > /dev/null
+
       - name: make ci
         run: make ci
 
