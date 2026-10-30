@@ -1,7 +1,8 @@
 # Machine-readable version manifest for snap7-interop.
 # Image digests and upstream pins are release artifacts; do not float tags.
 
-snap7_interop: "0.3.0"
+interop_version: "0.3.0"
+contract_version: "1.0"       # docs/CONTAINER_CONTRACT.md
 fixture_schema: "1.0.0"
 fixture_compiler: "0.1.0"
 

@@ -218,7 +218,7 @@ jobs:
           test -n "${NATIVE_DIGEST}" && test -n "${PYTHON_DIGEST}"
           mkdir -p dist/release
           {
-            echo "snap7_interop: ${GITHUB_REF_NAME#v}"
+            echo "interop_version: ${GITHUB_REF_NAME#v}"
             echo "git_sha: ${{ github.sha }}"
             echo "native_image: ${NATIVE_IMAGE}"
             echo "native_tag: ${GITHUB_REF_NAME}"

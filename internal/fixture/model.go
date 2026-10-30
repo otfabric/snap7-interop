@@ -2,11 +2,11 @@ package fixture
 
 // Limits bound fixture allocations for safety.
 const (
-	MaxAreaBytes       = 1 << 20 // 1 MiB per area
-	MaxAreas           = 64
-	MaxTotalAreaBytes  = 8 << 20 // 8 MiB across all areas
-	MaxValuePatches    = 4096
-	MaxExpectations    = 4096
+	MaxAreaBytes      = 1 << 20 // 1 MiB per area
+	MaxAreas          = 64
+	MaxTotalAreaBytes = 8 << 20 // 8 MiB across all areas
+	MaxValuePatches   = 4096
+	MaxExpectations   = 4096
 )
 
 // SourceFixture is the decoded source document used for semantic validation.
@@ -55,23 +55,23 @@ type BulkInitializer struct {
 }
 
 type ValuePatch struct {
-	Offset    int     `json:"offset"`
-	Bit       *int    `json:"bit,omitempty"`
-	DataType  string  `json:"dataType"`
-	ByteOrder string  `json:"byteOrder,omitempty"`
-	Length    int     `json:"length,omitempty"`
-	Value     any     `json:"value"`
-	Replace   bool    `json:"replace,omitempty"`
+	Offset    int    `json:"offset"`
+	Bit       *int   `json:"bit,omitempty"`
+	DataType  string `json:"dataType"`
+	ByteOrder string `json:"byteOrder,omitempty"`
+	Length    int    `json:"length,omitempty"`
+	Value     any    `json:"value"`
+	Replace   bool   `json:"replace,omitempty"`
 }
 
 type Expectation struct {
-	Operation string `json:"operation"`
-	Area      AreaRef `json:"area"`
-	Offset    *int   `json:"offset,omitempty"`
-	Bit       *int   `json:"bit,omitempty"`
-	Length    *int   `json:"length,omitempty"`
+	Operation string       `json:"operation"`
+	Area      AreaRef      `json:"area"`
+	Offset    *int         `json:"offset,omitempty"`
+	Bit       *int         `json:"bit,omitempty"`
+	Length    *int         `json:"length,omitempty"`
 	Data      *BytePayload `json:"data,omitempty"`
-	Result    any    `json:"result,omitempty"`
+	Result    any          `json:"result,omitempty"`
 }
 
 type AreaRef struct {

@@ -77,7 +77,7 @@ downstream. See README “Published images”.
    [RELEASE.md](RELEASE.md) (Summary, Breaking changes, pins if relevant),
    ending with a `---` line. That section, up to its `---`, is the body of the
    GitHub release (`scripts/release-notes.sh vX.Y.Z` prints it).
-2. Bump `snap7_interop` in `versions.yaml` (and README badge / pull examples).
+2. Bump `interop_version` in `versions.yaml` (and README badge / pull examples).
    `make lint` and CI fail when RELEASE.md has no notes for it.
 3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` checks the notes,
    publishes GHCR images and creates the release with those notes, the image

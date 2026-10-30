@@ -25,11 +25,11 @@ if [[ -z "${IMAGE_TAG:-}" ]]; then
     IMAGE_TAG="$(python3 - <<'PY'
 import yaml
 with open("versions.yaml", encoding="utf-8") as f:
-    print(yaml.safe_load(f)["snap7_interop"])
+    print(yaml.safe_load(f)["interop_version"])
 PY
 )"
   else
-    IMAGE_TAG="$(sed -n 's/^snap7_interop:[[:space:]]*"\([^"]*\)"/\1/p' versions.yaml | head -1)"
+    IMAGE_TAG="$(sed -n 's/^interop_version:[[:space:]]*"\([^"]*\)"/\1/p' versions.yaml | head -1)"
   fi
 fi
 if [[ -z "${IMAGE_TAG}" ]]; then
@@ -90,7 +90,7 @@ publish_one servers/python/Dockerfile "${PYTHON_REPO}"
 
 mkdir -p dist/release
 {
-  echo "snap7_interop: ${VERSION_TAG}"
+  echo "interop_version: ${VERSION_TAG}"
   echo "git_sha: ${GIT_SHA}"
   echo "native_image: ${NATIVE_REPO}"
   echo "python_image: ${PYTHON_REPO}"

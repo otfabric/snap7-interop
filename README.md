@@ -197,7 +197,7 @@ These must **fail** `fixturectl validate` (used by `make test`):
 ## Published images (GHCR)
 
 Tags are immutable (no floating `latest`): `v<version>` and `<version>` from
-`versions.yaml` (`snap7_interop`, currently `0.3.0`). Changelog: [RELEASE.md](RELEASE.md).
+`versions.yaml` (`interop_version`, currently `0.3.0`). Changelog: [RELEASE.md](RELEASE.md).
 
 ```bash
 docker pull ghcr.io/otfabric/snap7-interop-native:v0.3.0
@@ -358,7 +358,7 @@ snap7-interop/
 
 Version independently:
 
-- repository / image tags (`versions.yaml` → `snap7_interop`);
+- repository / image tags (`versions.yaml` → `interop_version`);
 - fixture schema and compiler;
 - individual fixture revisions;
 - native Snap7 git revision;

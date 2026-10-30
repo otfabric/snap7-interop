@@ -5,14 +5,14 @@
 # release workflow (otfabric/.github, go-package-release.yml) applies.
 #
 # Usage: release-notes.sh [<tag>]     e.g. release-notes.sh v0.3.0
-#        Without a tag: the version versions.yaml names (snap7_interop).
+#        Without a tag: the version versions.yaml names (interop_version).
 #
 # Fails when RELEASE.md has no such section, when the section is empty or
 # when it does not end with "---": the release workflow publishes exactly
 # this text as the body of the GitHub release.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-tag="${1:-v$(sed -nE 's/^snap7_interop: "([^"]+)".*/\1/p' "${ROOT}/versions.yaml")}"
+tag="${1:-v$(sed -nE 's/^interop_version: "([^"]+)".*/\1/p' "${ROOT}/versions.yaml")}"
 [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "release-notes: '${tag}' is not vX.Y.Z" >&2; exit 2; }
 
 notes=$(awk -v target="## ${tag}" '

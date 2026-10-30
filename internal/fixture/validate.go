@@ -3,6 +3,7 @@ package fixture
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,7 +27,7 @@ func NewValidator(schemaPath string) (*Validator, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open schema: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	doc, err := jsonschema.UnmarshalJSON(f)
 	if err != nil {
@@ -99,7 +100,8 @@ func invalid(r Result, d Diagnostic) Result {
 
 func schemaDiagnostics(err error) []Diagnostic {
 	var out []Diagnostic
-	if ve, ok := err.(*jsonschema.ValidationError); ok {
+	var ve *jsonschema.ValidationError
+	if errors.As(err, &ve) {
 		collectSchemaErrors(ve, &out)
 		if len(out) > 0 {
 			return out
