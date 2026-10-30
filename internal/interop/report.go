@@ -97,7 +97,8 @@ func passLabel(ok bool) string {
 
 func junitReport(rep Report) string {
 	failures := 0
-	if rep.Status == "fail" || rep.Status == "infrastructure-error" {
+	switch rep.Status {
+	case "fail", "infrastructure-error", "invalid":
 		failures = 1
 	}
 	skipped := 0
