@@ -22,6 +22,7 @@ Tags are immutable. A fix is a new version.
 
 ### Summary
 
+- **Go 1.25**: `golang.org/x/text` moves to v0.41.0 (govulncheck), which requires it; `versions.yaml` and CI follow.
 - **CI and release run on native runners**: each architecture builds on its own GitHub runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64) in parallel, with no QEMU emulation. CI now also smoke-tests, scans and runs interop on arm64. The release pushes each image and architecture by digest, then joins them into one signed multi-arch manifest list under the release tags. Both architectures are scanned for fixable CRITICAL and HIGH findings before anything is tagged.
 - **Release notes come from RELEASE.md**, as in every otfabric repository: the section of the tag, up to its `---` line, is the body of the GitHub release, followed by the image digests and pin snippets. `scripts/release-notes.sh` extracts it; `make lint`, CI and the release workflow fail when the notes of the version are missing.
 - **Harness fixes**: `interop-probe` applies `--timeout` per request, as documented, rather than once to the whole session. A step after a failed reconnect reports a transport failure instead of panicking. `junit.xml` counts an `invalid` fixture as a failure. `fixturectl` rejects a JSON number of exactly 2^63 (int64) or 2^64 (uint64); use the string form.
