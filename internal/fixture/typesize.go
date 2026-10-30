@@ -180,11 +180,13 @@ func asUint64(v any) (uint64, error) {
 	}
 }
 
-// occupiedRange describes a half-open byte interval [start, end).
+// occupiedRange describes a half-open byte interval [start, end). bit is the
+// bit of a bool patch, and nil for anything that covers whole bytes.
 type occupiedRange struct {
 	start int
 	end   int
 	path  string
+	bit   *int
 }
 
 func rangesOverlap(a, b occupiedRange) bool {
