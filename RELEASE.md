@@ -32,6 +32,24 @@ Tags are immutable. A fix is a new version.
 
 ---
 
+## v0.4.0
+
+**Date:** 2026-10-30
+
+**Previous release:** v0.3.0
+
+## Summary
+
+Interop results as the organisation's interop-result-v1.
+
+## Changes
+
+### Added
+
+- **`reports/results.json`** ([interop-result-v1](schemas/interop-result-v1.schema.json)): `make interop` derives it from the fixture reports, one result per fixture with the ID `fixture.<fixture-id>`. Only `pass` counts as passing; a run with no pass fails. Existing reports keep their shape.
+
+---
+
 ## v0.3.0
 
 **Date:** 2026-10-19

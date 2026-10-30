@@ -55,6 +55,7 @@ lint: ## Lint bootstrap contracts, shell scripts and Go packages
 test: ## Run unit tests, fixture validation and golden checks
 	@echo "Running go test"
 	@$(GO) test ./...
+	@python3 -m unittest discover -q -s scripts -p 'test_*.py'
 	@$(MAKE) fixturectl
 	@echo "Validating canonical fixtures"
 	@$(FIXTURECTL) validate --schema $(SCHEMA) $(CANONICAL)
