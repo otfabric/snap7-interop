@@ -10,22 +10,27 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) < 1 {
 		usage()
-		os.Exit(2)
+		return 2
 	}
 
-	switch os.Args[1] {
+	switch args[0] {
 	case "validate":
-		os.Exit(cmdValidate(os.Args[2:]))
+		return cmdValidate(args[1:])
 	case "compile":
-		os.Exit(cmdCompile(os.Args[2:]))
+		return cmdCompile(args[1:])
 	case "help", "-h", "--help":
 		usage()
+		return 0
 	default:
-		fmt.Fprintf(os.Stderr, "unknown command %q\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown command %q\n", args[0])
 		usage()
-		os.Exit(2)
+		return 2
 	}
 }
 
