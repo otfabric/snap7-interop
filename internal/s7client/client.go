@@ -37,7 +37,7 @@ type Conn struct {
 func Dial(addr string, rack, slot int, timeout time.Duration) (*Conn, error) {
 	conn, err := net.DialTimeout("tcp", addr, timeout)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", errTransport(), err)
+		return nil, fmt.Errorf("%w: %w", errTransport(), err)
 	}
 	_ = conn.SetDeadline(time.Now().Add(timeout))
 

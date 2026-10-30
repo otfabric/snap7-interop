@@ -41,7 +41,7 @@ lint: ## Lint bootstrap contracts, shell scripts and Go packages
 	@echo "Running bootstrap-check"
 	@chmod +x scripts/bootstrap-check.sh scripts/check-notices.sh scripts/sbom.sh scripts/scan.sh scripts/publish.sh scripts/release-notes.sh
 	@./scripts/bootstrap-check.sh
-	@scripts/release-notes.sh > /dev/null && echo "ok   RELEASE.md has the notes of snap7_interop"
+	@scripts/release-notes.sh > /dev/null && echo "ok   RELEASE.md has the notes of interop_version"
 	@./scripts/check-notices.sh
 	@if command -v shellcheck >/dev/null 2>&1; then \
 		echo "Running shellcheck"; \
@@ -152,7 +152,7 @@ python: ## Build pure-Python server image (BUILD_PLATFORM optional override)
 images: native python ## Build both server images
 	@echo "images: native and python built"
 
-# IMAGE_TAG defaults to versions.yaml snap7_interop (e.g. 0.1.0 → tags v0.1.0 and 0.1.0).
+# IMAGE_TAG defaults to versions.yaml interop_version (e.g. 0.1.0 → tags v0.1.0 and 0.1.0).
 # Requires: docker login ghcr.io (write:packages). Public package visibility set in GHCR UI.
 publish: ## Multi-arch build + push both images to ghcr.io/otfabric
 	@chmod +x scripts/publish.sh

@@ -2,16 +2,16 @@ package interop
 
 // DefaultCapabilities are the shared capabilities of both M2/M3 adapters.
 var DefaultCapabilities = map[string]bool{
-	"area.db":                    true,
-	"area.markers":               true,
-	"area.inputs":                true,
-	"area.outputs":               true,
-	"operation.read":             true,
-	"operation.write":            true,
-	"operation.bit":              true,
-	"operation.concurrent-read":  true,
-	"operation.reconnect":        true,
-	"access.read-only-enforce":   true,
+	"area.db":                   true,
+	"area.markers":              true,
+	"area.inputs":               true,
+	"area.outputs":              true,
+	"operation.read":            true,
+	"operation.write":           true,
+	"operation.bit":             true,
+	"operation.concurrent-read": true,
+	"operation.reconnect":       true,
+	"access.read-only-enforce":  true,
 }
 
 // MissingCapabilities returns required capabilities not present in caps.

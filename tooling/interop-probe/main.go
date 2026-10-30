@@ -68,7 +68,7 @@ func cmdSmoke(args []string) int {
 	if err != nil {
 		fail("connect: %v", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	data, outcome, err := c.ReadArea("db", *db, *offset, *length)
 	if err != nil || outcome != s7client.OutcomeSuccess {

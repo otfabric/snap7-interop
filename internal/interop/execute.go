@@ -47,7 +47,7 @@ func WaitReady(addr string, rack, slot int, timeout time.Duration) error {
 		last = err
 		time.Sleep(200 * time.Millisecond)
 	}
-	return fmt.Errorf("not ready within %s: %v", timeout, last)
+	return fmt.Errorf("not ready within %s: %w", timeout, last)
 }
 
 // RunEndpoint executes fixture expectations against one endpoint.
@@ -158,7 +158,7 @@ func executeConcurrentRead(addr string, fx *CompiledFixture, index int, exp Expe
 				results[i] = result{outcome: s7client.OutcomeTransportFailure, err: err.Error()}
 				return
 			}
-			defer conn.Close()
+			defer func() { _ = conn.Close() }()
 			data, outcome, err := conn.ReadArea(exp.AreaType, exp.AreaNum, exp.Offset, length)
 			r := result{outcome: outcome}
 			if err != nil {
