@@ -291,11 +291,15 @@ func validateAreaContent(area Area, base string) []Diagnostic {
 		}
 
 		cur := occupiedRange{start: patch.Offset, end: patch.Offset + size, path: ppath}
+		if patch.DataType == "bool" {
+			cur.bit = patch.Bit
+		}
 		if !patch.Replace {
 			for _, prev := range occupied {
 				if rangesOverlap(prev, cur) {
-					// bool bit patches in the same byte are allowed only with replace, or same-byte different bits.
-					if patch.DataType == "bool" && sameByteBitPatch(prev, cur) {
+					// Bool patches of different bits of one byte do not overlap;
+					// any other overlap needs replace.
+					if differentBitsOfByte(prev, cur) {
 						continue
 					}
 					diags = append(diags, Diagnostic{
@@ -316,8 +320,11 @@ func validateAreaContent(area Area, base string) []Diagnostic {
 	return diags
 }
 
-func sameByteBitPatch(a, b occupiedRange) bool {
-	return a.start == b.start && a.end == b.end && a.end-a.start == 1
+// differentBitsOfByte reports whether a and b are bool patches of different
+// bits of the same byte. A bulk initializer or a patch of another type has
+// no bit, and covers the whole of its bytes.
+func differentBitsOfByte(a, b occupiedRange) bool {
+	return a.bit != nil && b.bit != nil && *a.bit != *b.bit && a.start == b.start
 }
 
 func bulkLength(init *BulkInitializer, path string) (int, *Diagnostic) {

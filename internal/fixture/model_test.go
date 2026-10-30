@@ -208,6 +208,12 @@ func TestValidateDiagnostics(t *testing.T) {
 		{"ascii length", doc(patch(`"offset":0,"dataType":"ascii","length":2,"value":"x"`)), fixture.CodeTypeEncoding},
 		{"ascii 8-bit", doc(patch(`"offset":0,"dataType":"ascii","length":2,"value":"é"`)), fixture.CodeTypeRange},
 		{"overlap", doc(db(`"initial":{"hex":"0000"},"values":[{"offset":1,"dataType":"uint8","value":1}]`)), fixture.CodeOverlap},
+		{"same bit twice", doc(db(`"values":[{"offset":0,"dataType":"bool","bit":3,"value":true},{"offset":0,"dataType":"bool","bit":3,"value":false}]`)), fixture.CodeOverlap},
+		{"bool over a one-byte initializer", doc(db(`"initial":{"hex":"00"},"values":[{"offset":0,"dataType":"bool","bit":0,"value":true}]`)), fixture.CodeOverlap},
+		{"bool over a uint8", doc(db(`"values":[{"offset":0,"dataType":"uint8","value":1},{"offset":0,"dataType":"bool","bit":0,"value":true}]`)), fixture.CodeOverlap},
+		{"uint8 over a bool", doc(db(`"values":[{"offset":0,"dataType":"bool","bit":0,"value":true},{"offset":0,"dataType":"uint8","value":1}]`)), fixture.CodeOverlap},
+		{"bool over a uint16", doc(db(`"values":[{"offset":0,"dataType":"uint16","byteOrder":"big-endian","value":1},{"offset":1,"dataType":"bool","bit":0,"value":true}]`)), fixture.CodeOverlap},
+		{"third bool repeats the first bit", doc(db(`"values":[{"offset":0,"dataType":"bool","bit":0,"value":true},{"offset":0,"dataType":"bool","bit":1,"value":true},{"offset":0,"dataType":"bool","bit":0,"value":false}]`)), fixture.CodeOverlap},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -228,9 +234,11 @@ func TestValidateDiagnostics(t *testing.T) {
 func TestValidateAccepts(t *testing.T) {
 	v := newValidator(t)
 	for name, input := range map[string]string{
-		"replace over an initializer": doc(db(`"initial":{"hex":"0000"},"values":[{"offset":1,"dataType":"uint8","value":1,"replace":true}]`)),
-		"bits of one byte":            doc(db(`"values":[{"offset":0,"dataType":"bool","bit":0,"value":true},{"offset":0,"dataType":"bool","bit":1,"value":true}]`)),
-		"bytes initializer":           doc(db(`"initial":{"bytes":[1,2]}`)),
+		"replace over an initializer":         doc(db(`"initial":{"hex":"0000"},"values":[{"offset":1,"dataType":"uint8","value":1,"replace":true}]`)),
+		"bits of one byte":                    doc(db(`"values":[{"offset":0,"dataType":"bool","bit":0,"value":true},{"offset":0,"dataType":"bool","bit":1,"value":true}]`)),
+		"bytes initializer":                   doc(db(`"initial":{"bytes":[1,2]}`)),
+		"replace of the same bit":             doc(db(`"values":[{"offset":0,"dataType":"bool","bit":0,"value":true},{"offset":0,"dataType":"bool","bit":0,"value":false,"replace":true}]`)),
+		"replace over a one-byte initializer": doc(db(`"initial":{"hex":"00"},"values":[{"offset":0,"dataType":"bool","bit":0,"value":true,"replace":true}]`)),
 	} {
 		t.Run(name, func(t *testing.T) {
 			if r := v.ValidateFile(writeFile(t, input)); !r.Valid {
