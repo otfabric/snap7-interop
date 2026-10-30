@@ -33,6 +33,8 @@ fi
 
 make images probe-bin
 
+started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+ran=()
 failed=0
 for fixture in "${fixtures[@]}"; do
   id="$(basename "${fixture}" .compiled.json)"
@@ -59,6 +61,7 @@ for fixture in "${fixtures[@]}"; do
     -e "SNAP_INTEROP_FIXTURE=/fixtures/${id}.compiled.json" \
     "${PYTHON_IMAGE}")"
 
+  probe_start="${SECONDS}"
   set +e
   "${PROBE}" run \
     --fixture "${fixture}" \
@@ -67,6 +70,7 @@ for fixture in "${fixtures[@]}"; do
     --out "${report_dir}"
   rc=$?
   set -e
+  ran+=("${id}=$(((SECONDS - probe_start) * 1000))")
 
   if [[ "${rc}" -ne 0 ]]; then
     echo "FAIL fixture ${id}" >&2
@@ -80,6 +84,10 @@ for fixture in "${fixtures[@]}"; do
   "${DOCKER}" stop "${native_cid}" >/dev/null 2>&1 || true
   "${DOCKER}" stop "${python_cid}" >/dev/null 2>&1 || true
 done
+
+# reports/results.json (interop-result-v1): also refuses a run with no pass.
+python3 scripts/report-to-results.py reports reports/results.json "${started}" \
+  "BUILD_PLATFORM=${BUILD_PLATFORM} FIXTURE=${FIXTURE} make interop" "${ran[@]}" || failed=1
 
 if [[ "${failed}" -ne 0 ]]; then
   echo "interop failed; see reports/*/report.md" >&2

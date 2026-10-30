@@ -77,6 +77,10 @@ FIXTURE=basic-db make interop
 ```
 
 Reports land under `reports/<fixture-id>/` (`report.json`, `report.md`, `junit.xml`).
+`reports/results.json` is the organisation's
+[interop-result-v1](schemas/interop-result-v1.schema.json), derived from them: one
+result per fixture, with the stable ID `fixture.<fixture-id>`. Only `pass` counts as
+passing; a run with no pass fails.
 
 Client API mapping for go-s7comm is in
 [docs/go-s7comm-coverage.md](docs/go-s7comm-coverage.md).
