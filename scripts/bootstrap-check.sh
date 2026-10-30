@@ -50,7 +50,8 @@ require_file scripts/scan.sh
 require_file scripts/check-notices.sh
 require_file scripts/publish.sh
 require_file .github/workflows/release.yml
-require_file .github/workflows/candidate.yml
+require_file .github/workflows/upstream.yml
+require_file scripts/latest-upstream.py
 
 echo "==> checking directory skeleton"
 require_dir fixtures/schema

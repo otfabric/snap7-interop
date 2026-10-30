@@ -23,7 +23,7 @@ PYTHON_DIR := servers/python
 .PHONY: help fmt lint test ci bootstrap-check build fixturectl probe-bin \
 	fixtures fixtures-check fixtures-update \
 	native python images publish up down probe smoke-native smoke-python \
-	python-test _smoke-run interop report sbom scan notices fuzz
+	candidate-native candidate-python python-test _smoke-run interop report sbom scan notices fuzz
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-22s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -173,6 +173,29 @@ smoke-native: native probe-bin ## Build native image, run it, probe read/write, 
 
 smoke-python: python probe-bin ## Build Python image, run it, probe read/write, tear down
 	@$(MAKE) _smoke-run IMAGE=$(PYTHON_IMAGE) HOST_PORT=2102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=python
+
+# Candidates of the Upstream workflow (.github/workflows/upstream.yml): build an
+# image at the latest upstream and smoke-probe it. Pins are not changed: the
+# Python candidate swaps requirements.txt for the build only and restores it.
+candidate-native: probe-bin ## Build + smoke the native image at a Snap7 commit (CANDIDATE_SHA=...)
+	@test -n "$(CANDIDATE_SHA)" || { echo "CANDIDATE_SHA=<commit> is required" >&2; exit 1; }
+	@$(DOCKER) build --platform=$(BUILD_PLATFORM) \
+		-f servers/native/Dockerfile \
+		--build-arg SNAP7_REVISION=$(CANDIDATE_SHA) \
+		-t snap7-interop-native:candidate .
+	@$(MAKE) _smoke-run IMAGE=snap7-interop-native:candidate HOST_PORT=1102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=native
+
+candidate-python: probe-bin ## Build + smoke the Python image at a python-snap7 release (CANDIDATE_VERSION=...)
+	@test -n "$(CANDIDATE_VERSION)" || { echo "CANDIDATE_VERSION=<version> is required" >&2; exit 1; }
+	@cp servers/python/requirements.txt $(BIN_DIR)/requirements.pinned; \
+	sed -E 's/^python-snap7==.*/python-snap7==$(CANDIDATE_VERSION)/' $(BIN_DIR)/requirements.pinned > servers/python/requirements.txt; \
+	rc=0; \
+	$(DOCKER) build --platform=$(BUILD_PLATFORM) \
+		-f servers/python/Dockerfile \
+		-t snap7-interop-python:candidate . || rc=$$?; \
+	cp $(BIN_DIR)/requirements.pinned servers/python/requirements.txt; \
+	exit $$rc
+	@$(MAKE) _smoke-run IMAGE=snap7-interop-python:candidate HOST_PORT=2102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=python
 
 _smoke-run:
 	@cid=$$($(DOCKER) run -d --rm $(RUN_PLATFORM) \

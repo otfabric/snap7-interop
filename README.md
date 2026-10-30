@@ -261,8 +261,14 @@ make images             # build both local images
 make smoke-native       # native read/write smoke
 make smoke-python
 make interop            # full dual-server matrix + reports/
+make candidate-python CANDIDATE_VERSION=<v>  # smoke a newer python-snap7 (pins untouched)
+make candidate-native CANDIDATE_SHA=<commit>  # smoke another Snap7 commit
 make publish            # multi-arch push to GHCR
 ```
+
+The daily Upstream workflow (`.github/workflows/upstream.yml`) compares the pins with
+the latest upstream (`scripts/latest-upstream.py`), runs these candidates for pins
+that are behind and keeps the issue "Upstream releases: pins behind the latest" up to date.
 
 Architecture override:
 

@@ -1,0 +1,126 @@
+name: Upstream
+run-name: "Upstream check (${{ github.event_name }})"
+
+# Daily check of every pin against the latest upstream: python-snap7 against
+# its latest stable PyPI release, Snap7 (SCADACS fork, pinned by commit)
+# against the HEAD of its default branch (scripts/latest-upstream.py), and the
+# digest of every base image. A server whose pin is behind is built at the
+# latest upstream and smoke-probed (make candidate-<server>; once per
+# pin -> latest pair, later runs reuse that result). The table goes to the Job
+# Summary and to the issue "Upstream releases: pins behind the latest", which
+# is opened or updated (with a comment when a new version shows up) and closed
+# once every pin is current. Pins in versions.yaml are never changed here: a
+# bump is a reviewed change. Shared steps:
+# https://github.com/otfabric/.github/tree/main/actions
+on:
+  schedule:
+    - cron: "51 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upstream
+  cancel-in-progress: false
+
+env:
+  GOWORK: "off"
+  BASE_REGISTRY: mirror.gcr.io/library
+
+jobs:
+  images:
+    name: Base images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: otfabric/.github/actions/upstream-images@main
+
+  candidate:
+    name: ${{ matrix.component }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: python-snap7
+            kind: library
+            target: candidate-python
+          - component: snap7
+            kind: commit
+            target: candidate-native
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Resolve the pin against upstream
+        id: resolve
+        run: scripts/latest-upstream.py "${{ matrix.component }}" | tee -a "$GITHUB_OUTPUT"
+
+      - name: Set up Go
+        if: steps.resolve.outputs.update == 'yes'
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.23.x"
+
+      - name: Set up Docker Buildx
+        if: steps.resolve.outputs.update == 'yes'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and smoke-probe the latest upstream
+        id: test
+        if: steps.resolve.outputs.update == 'yes'
+        uses: otfabric/.github/actions/upstream-candidate@main
+        with:
+          name: ${{ matrix.component }}
+          pinned: ${{ steps.resolve.outputs.pin }}
+          latest: ${{ steps.resolve.outputs.latest }}
+          result-pattern: '^smoke-[a-z]+ passed'
+          command: >-
+            make "${{ matrix.target }}"
+            CANDIDATE_VERSION="${{ steps.resolve.outputs.latest }}"
+            CANDIDATE_SHA="${{ steps.resolve.outputs.latest_sha }}"
+
+      - name: Table row
+        if: always()
+        uses: otfabric/.github/actions/upstream-row@main
+        with:
+          component: ${{ matrix.component }}
+          kind: ${{ matrix.kind }}
+          source: ${{ steps.resolve.outputs.source }}
+          pinned: ${{ steps.resolve.outputs.pin }}
+          latest: ${{ steps.resolve.outputs.latest }}
+          update: ${{ steps.resolve.outputs.update }}
+          detail: ${{ steps.resolve.outcome == 'failure' && 'upstream lookup failed (see the job log)' || '' }}
+          test-outcome: ${{ steps.test.outputs.outcome }}
+          test-result: ${{ steps.test.outputs.result }}
+          test-cached: ${{ steps.test.outputs.cached }}
+
+  report:
+    name: Report
+    runs-on: ubuntu-latest
+    needs: [images, candidate]
+    if: always()
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: otfabric/.github/actions/upstream-report@main
+        with:
+          needs: ${{ toJSON(needs) }}
+          notes: |
+            ### To update
+
+            - **python-snap7:** move `python_snap7.version` in `versions.yaml`, the pin in
+              `servers/python/requirements.txt` and the pin check in
+              `scripts/bootstrap-check.sh`. Reproduce the candidate with
+              `make candidate-python CANDIDATE_VERSION=<version>`.
+            - **Snap7 (commit):** move `native_snap7.revision` in `versions.yaml` and
+              `ARG SNAP7_REVISION` in `servers/native/Dockerfile` (and the pin check in
+              `scripts/bootstrap-check.sh`). Reproduce the candidate with
+              `make candidate-native CANDIDATE_SHA=<commit>`.
+            - **Base image:** replace the digest in every file that pins it (`versions.yaml`
+              and the Dockerfiles).
+            - Then run `make interop` and record the change in `docs/compatibility.md` and
+              `RELEASE.md`.
