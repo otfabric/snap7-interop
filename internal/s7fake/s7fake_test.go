@@ -46,6 +46,9 @@ func TestMemoryThroughClient(t *testing.T) {
 			t.Fatalf("%s: %x, %s, %v", tt.area, got, outcome, err)
 		}
 	}
+	if got, outcome, err := c.ReadBit("markers", 0, 0, 1); err != nil || outcome != s7client.OutcomeSuccess || !bytes.Equal(got, []byte{1}) {
+		t.Fatalf("read bit: %x, %s, %v", got, outcome, err)
+	}
 	if outcome, err := c.WriteArea("db", 1, 1, []byte{9, 8}); err != nil || outcome != s7client.OutcomeSuccess {
 		t.Fatalf("write: %s, %v", outcome, err)
 	}
