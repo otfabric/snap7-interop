@@ -48,9 +48,11 @@ jobs:
           - component: python-snap7
             kind: library
             target: candidate-python
+            recipe: servers/python
           - component: snap7
             kind: commit
             target: candidate-native
+            recipe: servers/native
     steps:
       - uses: actions/checkout@v7
 
@@ -77,6 +79,7 @@ jobs:
           pinned: ${{ steps.resolve.outputs.pin }}
           latest: ${{ steps.resolve.outputs.latest }}
           result-pattern: '^smoke-[a-z]+ passed'
+          cache-paths: "${{ matrix.recipe }} Makefile scripts"
           command: >-
             make "${{ matrix.target }}"
             CANDIDATE_VERSION="${{ steps.resolve.outputs.latest }}"
