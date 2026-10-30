@@ -152,7 +152,7 @@ func asInt64(v any) (int64, error) {
 		if n != math.Trunc(n) {
 			return 0, fmt.Errorf("expected integer, got %v", n)
 		}
-		if n > float64(math.MaxInt64) || n < float64(math.MinInt64) {
+		if n >= float64(math.MaxInt64) || n < float64(math.MinInt64) { // float64(MaxInt64) is 2^63
 			return 0, fmt.Errorf("integer out of int64 range")
 		}
 		return int64(n), nil
@@ -169,7 +169,7 @@ func asUint64(v any) (uint64, error) {
 		if n < 0 || n != math.Trunc(n) {
 			return 0, fmt.Errorf("expected unsigned integer, got %v", n)
 		}
-		if n > float64(math.MaxUint64) {
+		if n >= float64(math.MaxUint64) { // float64(MaxUint64) is 2^64
 			return 0, fmt.Errorf("integer out of uint64 range")
 		}
 		return uint64(n), nil

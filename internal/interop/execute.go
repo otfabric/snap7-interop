@@ -79,11 +79,13 @@ func RunEndpoint(name, addr string, fx *CompiledFixture, timeout time.Duration) 
 
 	for i, exp := range fx.Expectations {
 		var step StepResult
-		switch exp.Operation {
-		case "reconnect":
+		switch {
+		case exp.Operation == "reconnect":
 			step = executeReconnect(&c, addr, fx, i, exp, timeout)
-		case "concurrent-read":
+		case exp.Operation == "concurrent-read":
 			step = executeConcurrentRead(addr, fx, i, exp, timeout)
+		case c == nil: // an earlier reconnect failed
+			step = notConnected(i, exp)
 		default:
 			step = executeStep(c, i, exp)
 		}
@@ -93,6 +95,20 @@ func RunEndpoint(name, addr string, fx *CompiledFixture, timeout time.Duration) 
 		}
 	}
 	return out
+}
+
+func notConnected(index int, exp Expectation) StepResult {
+	return StepResult{
+		Index:       index,
+		Operation:   exp.Operation,
+		AreaType:    exp.AreaType,
+		AreaNumber:  exp.AreaNum,
+		Offset:      exp.Offset,
+		Length:      exp.Length,
+		Outcome:     s7client.OutcomeTransportFailure,
+		Error:       "not connected",
+		WantOutcome: exp.WantOutcome,
+	}
 }
 
 func executeReconnect(c **s7client.Conn, addr string, fx *CompiledFixture, index int, exp Expectation, timeout time.Duration) StepResult {

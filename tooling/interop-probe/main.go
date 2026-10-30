@@ -15,20 +15,25 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) < 1 {
 		usage()
-		os.Exit(2)
+		return 2
 	}
-	switch os.Args[1] {
+	switch args[0] {
 	case "smoke":
-		os.Exit(cmdSmoke(os.Args[2:]))
+		return cmdSmoke(args[1:])
 	case "run", "interop":
-		os.Exit(cmdRun(os.Args[2:]))
+		return cmdRun(args[1:])
 	case "help", "-h", "--help":
 		usage()
+		return 0
 	default:
 		// Backward-compatible smoke flags without a subcommand.
-		os.Exit(cmdSmoke(os.Args[1:]))
+		return cmdSmoke(args)
 	}
 }
 
@@ -66,23 +71,23 @@ func cmdSmoke(args []string) int {
 
 	c, err := s7client.Dial(*addr, *rack, *slot, *timeout)
 	if err != nil {
-		fail("connect: %v", err)
+		return fail("connect: %v", err)
 	}
 	defer func() { _ = c.Close() }()
 
 	data, outcome, err := c.ReadArea("db", *db, *offset, *length)
 	if err != nil || outcome != s7client.OutcomeSuccess {
-		fail("read: outcome=%s err=%v", outcome, err)
+		return fail("read: outcome=%s err=%v", outcome, err)
 	}
 	fmt.Printf("READ db=%d offset=%d length=%d hex=%s\n", *db, *offset, *length, hex.EncodeToString(data))
 
 	if *expectHex != "" {
 		want, err := hex.DecodeString(strings.ReplaceAll(*expectHex, " ", ""))
 		if err != nil {
-			fail("expect-hex: %v", err)
+			return fail("expect-hex: %v", err)
 		}
 		if hex.EncodeToString(data) != hex.EncodeToString(want) {
-			fail("byte mismatch: got %s want %s", hex.EncodeToString(data), hex.EncodeToString(want))
+			return fail("byte mismatch: got %s want %s", hex.EncodeToString(data), hex.EncodeToString(want))
 		}
 		fmt.Println("OK expect-hex match")
 	}
@@ -90,19 +95,19 @@ func cmdSmoke(args []string) int {
 	if *writeHex != "" {
 		payload, err := hex.DecodeString(strings.ReplaceAll(*writeHex, " ", ""))
 		if err != nil {
-			fail("write-hex: %v", err)
+			return fail("write-hex: %v", err)
 		}
 		outcome, err := c.WriteArea("db", *db, *offset, payload)
 		if err != nil || outcome != s7client.OutcomeSuccess {
-			fail("write: outcome=%s err=%v", outcome, err)
+			return fail("write: outcome=%s err=%v", outcome, err)
 		}
 		fmt.Printf("WRITE db=%d offset=%d hex=%s\n", *db, *offset, hex.EncodeToString(payload))
 		got, outcome, err := c.ReadArea("db", *db, *offset, len(payload))
 		if err != nil || outcome != s7client.OutcomeSuccess {
-			fail("re-read: outcome=%s err=%v", outcome, err)
+			return fail("re-read: outcome=%s err=%v", outcome, err)
 		}
 		if hex.EncodeToString(got) != hex.EncodeToString(payload) {
-			fail("write verify mismatch: got %s want %s", hex.EncodeToString(got), hex.EncodeToString(payload))
+			return fail("write verify mismatch: got %s want %s", hex.EncodeToString(got), hex.EncodeToString(payload))
 		}
 		fmt.Println("OK write verified")
 	}
@@ -150,7 +155,7 @@ func cmdRun(args []string) int {
 	return 0
 }
 
-func fail(format string, args ...any) {
+func fail(format string, args ...any) int {
 	fmt.Fprintf(os.Stderr, "FAIL: "+format+"\n", args...)
-	os.Exit(1)
+	return 1
 }

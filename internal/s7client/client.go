@@ -29,11 +29,13 @@ const (
 
 // Conn is a connected S7 session.
 type Conn struct {
-	conn   net.Conn
-	pduRef uint16
+	conn    net.Conn
+	pduRef  uint16
+	timeout time.Duration
 }
 
-// Dial connects and completes COTP + S7 setup.
+// Dial connects and completes COTP + S7 setup. timeout bounds the connection
+// setup as a whole, and each later request on its own.
 func Dial(addr string, rack, slot int, timeout time.Duration) (*Conn, error) {
 	conn, err := net.DialTimeout("tcp", addr, timeout)
 	if err != nil {
@@ -41,7 +43,7 @@ func Dial(addr string, rack, slot int, timeout time.Duration) (*Conn, error) {
 	}
 	_ = conn.SetDeadline(time.Now().Add(timeout))
 
-	c := &Conn{conn: conn, pduRef: 1}
+	c := &Conn{conn: conn, pduRef: 1, timeout: timeout}
 	if err := c.cotpConnect(rack, slot); err != nil {
 		_ = conn.Close()
 		return nil, err
@@ -76,6 +78,7 @@ func (c *Conn) read(areaType string, number, bitOffset, length int, transport by
 	item := encodeAnyPointer(areaCode, number, bitOffset, length, transport)
 	param := append([]byte{0x04, 0x01}, item...)
 	req := append(s7Header(0x01, c.nextRef(), len(param), 0), param...)
+	_ = c.conn.SetDeadline(time.Now().Add(c.timeout))
 	if err := writeCOTPData(c.conn, req); err != nil {
 		return nil, OutcomeTransportFailure, err
 	}
@@ -144,6 +147,7 @@ func (c *Conn) write(areaType string, number, bitOffset, elements int, transport
 	data = append(data, payload...)
 	req := append(s7Header(0x01, c.nextRef(), len(param), len(data)), param...)
 	req = append(req, data...)
+	_ = c.conn.SetDeadline(time.Now().Add(c.timeout))
 	if err := writeCOTPData(c.conn, req); err != nil {
 		return OutcomeTransportFailure, err
 	}
