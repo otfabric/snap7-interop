@@ -1,10 +1,27 @@
 name: Release
-run-name: "Release ${{ github.ref_name }} by @${{ github.actor }}"
+run-name: "Release ${{ inputs.bump && format('({0}) from {1}', inputs.bump, github.ref_name) || github.ref_name }} by @${{ github.actor }}"
 
+# Tag push: publish that tag. Manual run: bump the latest vX.Y.Z tag (patch by
+# default) and publish that from main; the git tag is created with the GitHub
+# release, its last step, so a failed run leaves no tag behind.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semver component to increment from the latest vX.Y.Z tag
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -22,9 +39,57 @@ env:
 # parallel, and pushed by digest. The merge job joins the two digests of an
 # image into one multi-arch manifest list under the release tags and signs it.
 jobs:
+  # The tag to release. Fails before anything is built when the commit is not
+  # ready for it: versions.yaml and RELEASE.md must already name that version.
+  version:
+    name: Resolve version
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Resolve tag
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          BUMP: ${{ inputs.bump || 'patch' }}
+        run: |
+          set -euo pipefail
+          git fetch --tags --force origin
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            if [ "${REF_NAME}" != "${DEFAULT_BRANCH}" ]; then
+              echo "::error::Releases are only allowed from ${DEFAULT_BRANCH}, not ${REF_NAME}"
+              exit 1
+            fi
+            tag="$(scripts/next-version.sh "${BUMP}")"
+            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+              echo "::error::tag ${tag} already exists"
+              exit 1
+            fi
+          else
+            tag="${REF_NAME}"
+          fi
+          [[ "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+            || { echo "::error::${tag} is not vX.Y.Z"; exit 1; }
+          grep -qF "interop_version: \"${tag#v}\"" versions.yaml \
+            || { echo "::error::versions.yaml does not say interop_version: \"${tag#v}\""; exit 1; }
+          scripts/release-notes.sh "${tag}" > /dev/null \
+            || { echo "::error::RELEASE.md has no notes for ${tag}"; exit 1; }
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "releasing ${tag} (from ${EVENT_NAME})"
+
   verify:
     name: verify
+    needs: version
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -38,7 +103,7 @@ jobs:
       # "---" line. Check it before anything is built or pushed.
       - name: RELEASE.md has the notes of the tag
         run: |
-          scripts/release-notes.sh "${GITHUB_REF_NAME}" > /dev/null || { echo "::error::RELEASE.md has no notes for ${GITHUB_REF_NAME}"; exit 1; }
+          scripts/release-notes.sh "${TAG}" > /dev/null || { echo "::error::RELEASE.md has no notes for ${TAG}"; exit 1; }
 
       - name: Notices + CI
         run: |
@@ -48,7 +113,7 @@ jobs:
 
   build:
     name: build ${{ matrix.image }} (${{ matrix.arch }})
-    needs: verify
+    needs: [version, verify]
     strategy:
       fail-fast: true
       matrix:
@@ -60,6 +125,8 @@ jobs:
           - arch: arm64
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -71,7 +138,7 @@ jobs:
             native) echo "name=${NATIVE_IMAGE}" >> "$GITHUB_OUTPUT" ;;
             python) echo "name=${PYTHON_IMAGE}" >> "$GITHUB_OUTPUT" ;;
           esac
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -136,7 +203,7 @@ jobs:
 
   merge:
     name: merge ${{ matrix.image }}
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -144,6 +211,8 @@ jobs:
     outputs:
       native_digest: ${{ steps.export.outputs.native_digest }}
       python_digest: ${{ steps.export.outputs.python_digest }}
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - name: Download digests
         uses: actions/download-artifact@v8
@@ -159,7 +228,7 @@ jobs:
             native) echo "name=${NATIVE_IMAGE}" >> "$GITHUB_OUTPUT" ;;
             python) echo "name=${PYTHON_IMAGE}" >> "$GITHUB_OUTPUT" ;;
           esac
-          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -179,17 +248,17 @@ jobs:
         run: |
           test "$(ls | wc -l)" -eq 2
           docker buildx imagetools create \
-            -t "${IMAGE}:${GITHUB_REF_NAME}" \
+            -t "${IMAGE}:${TAG}" \
             -t "${IMAGE}:${VERSION}" \
             $(printf "${IMAGE}@sha256:%s " *)
-          docker buildx imagetools inspect "${IMAGE}:${GITHUB_REF_NAME}"
+          docker buildx imagetools inspect "${IMAGE}:${TAG}"
 
       - name: Resolve manifest list digest
         id: export
         env:
           IMAGE: ${{ steps.img.outputs.name }}
         run: |
-          digest="$(docker buildx imagetools inspect "${IMAGE}:${GITHUB_REF_NAME}" --format '{{json .Manifest}}' | jq -r .digest)"
+          digest="$(docker buildx imagetools inspect "${IMAGE}:${TAG}" --format '{{json .Manifest}}' | jq -r .digest)"
           echo "digest=${digest}" >> "$GITHUB_OUTPUT"
           echo "${{ matrix.image }}_digest=${digest}" >> "$GITHUB_OUTPUT"
 
@@ -204,8 +273,10 @@ jobs:
 
   publish:
     name: publish
-    needs: merge
+    needs: [version, merge]
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -218,13 +289,13 @@ jobs:
           test -n "${NATIVE_DIGEST}" && test -n "${PYTHON_DIGEST}"
           mkdir -p dist/release
           {
-            echo "interop_version: ${GITHUB_REF_NAME#v}"
+            echo "interop_version: ${TAG#v}"
             echo "git_sha: ${{ github.sha }}"
             echo "native_image: ${NATIVE_IMAGE}"
-            echo "native_tag: ${GITHUB_REF_NAME}"
+            echo "native_tag: ${TAG}"
             echo "native_digest: ${NATIVE_DIGEST}"
             echo "python_image: ${PYTHON_IMAGE}"
-            echo "python_tag: ${GITHUB_REF_NAME}"
+            echo "python_tag: ${TAG}"
             echo "python_digest: ${PYTHON_DIGEST}"
           } > dist/release/images.txt
           cp versions.yaml dist/release/versions.yaml
@@ -247,14 +318,14 @@ jobs:
           PYTHON_DIGEST: ${{ needs.merge.outputs.python_digest }}
         run: |
           {
-            scripts/release-notes.sh "${GITHUB_REF_NAME}"
+            scripts/release-notes.sh "${TAG}"
             echo
             echo "## Images"
             echo
             echo "| Image | Digest |"
             echo "|-------|--------|"
-            echo "| \`${NATIVE_IMAGE}:${GITHUB_REF_NAME}\` | \`${NATIVE_DIGEST}\` |"
-            echo "| \`${PYTHON_IMAGE}:${GITHUB_REF_NAME}\` | \`${PYTHON_DIGEST}\` |"
+            echo "| \`${NATIVE_IMAGE}:${TAG}\` | \`${NATIVE_DIGEST}\` |"
+            echo "| \`${PYTHON_IMAGE}:${TAG}\` | \`${PYTHON_DIGEST}\` |"
             echo
             echo "## Pinning in a consumer"
             echo
@@ -270,6 +341,8 @@ jobs:
       - name: Upload release artifacts
         uses: softprops/action-gh-release@v3
         with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           body_path: ${{ runner.temp }}/release-body.md
           files: |
             dist/release/**

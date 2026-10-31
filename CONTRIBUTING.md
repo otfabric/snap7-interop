@@ -79,7 +79,9 @@ downstream. See README “Published images”.
    GitHub release (`scripts/release-notes.sh vX.Y.Z` prints it).
 2. Bump `interop_version` in `versions.yaml` (and README badge / pull examples).
    `make lint` and CI fail when RELEASE.md has no notes for it.
-3. Tag `vX.Y.Z` and push — `.github/workflows/release.yml` checks the notes,
+3. Run the `Release` workflow on `main` and pick the bump (`patch` by default,
+   `minor` or `major`), or push the tag `vX.Y.Z` —
+   `.github/workflows/release.yml` checks the notes,
    publishes GHCR images and creates the release with those notes, the image
    digests and the release artifacts.
 

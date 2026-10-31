@@ -4,7 +4,7 @@
 
 1. Rename **Unreleased** below to `## vX.Y.Z` (with `**Date:**` and `**Previous release:**`), and set `snap7_interop` in `versions.yaml` to the same version, in one change. `make lint` (and so `make ci` and CI) fails when RELEASE.md has no notes for `snap7_interop`.
 2. `make ci` on the commit to release.
-3. Tag `vX.Y.Z` and push the tag. The release workflow checks the notes of the tag first, then runs `make ci`, builds each image on a native amd64 and arm64 runner, scans it, pushes it by digest, joins the two digests into one signed multi-arch manifest list under `vX.Y.Z` and `X.Y.Z`, and creates the GitHub release with `images.txt`, `versions.yaml`, `THIRD_PARTY_NOTICES.md`, a source SBOM and `SHA256SUMS`.
+3. Run the `Release` workflow on `main` from the Actions tab and pick the bump (`patch` by default, `minor` or `major`) that gives `vX.Y.Z`, or push the tag `vX.Y.Z` yourself. The release workflow checks the notes of the tag first, then runs `make ci`, builds each image on a native amd64 and arm64 runner, scans it, pushes it by digest, joins the two digests into one signed multi-arch manifest list under `vX.Y.Z` and `X.Y.Z`, and creates the GitHub release with `images.txt`, `versions.yaml`, `THIRD_PARTY_NOTICES.md`, a source SBOM and `SHA256SUMS`.
 4. Consumers pin the digests from the release body or `images.txt`.
 
 The notes are the body of the GitHub release, followed by the image digests:
