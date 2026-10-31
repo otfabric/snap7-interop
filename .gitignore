@@ -58,3 +58,7 @@ credentials.json
 *.pem
 *.key
 *.egg-info/
+
+# Output of a bare `go build`, anchored so it can never hide a source folder
+/tooling/fixturectl/fixturectl
+/tooling/interop-probe/interop-probe
