@@ -14,7 +14,7 @@ services:
     profiles: ["native", "servers"]
     build:
       context: .
-      dockerfile: servers/native/Dockerfile
+      dockerfile: adapters/native/Dockerfile
       platforms:
         - linux/amd64
     image: snap7-interop-native:local
@@ -50,7 +50,7 @@ services:
     profiles: ["python", "servers"]
     build:
       context: .
-      dockerfile: servers/python/Dockerfile
+      dockerfile: adapters/python/Dockerfile
     image: snap7-interop-python:local
     environment:
       SNAP_INTEROP_FIXTURE: /fixtures/basic-db.compiled.json

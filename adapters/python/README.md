@@ -6,7 +6,7 @@ Published image: `ghcr.io/otfabric/snap7-interop-python`.
 
 Scope, fixture catalog, and out-of-scope topics:
 [repository README](../../README.md). Compatibility notes:
-[docs/compatibility.md](../../docs/compatibility.md).
+[docs/COMPATIBILITY.md](../../docs/COMPATIBILITY.md).
 
 ## Contract
 
@@ -28,7 +28,7 @@ and in `tests/test_no_native_lib.py`).
 
 ## Local checks
 
-From `servers/python/` (or via root `make python-test`):
+From `adapters/python/` (or via root `make python-test`):
 
 ```bash
 python -m venv .venv

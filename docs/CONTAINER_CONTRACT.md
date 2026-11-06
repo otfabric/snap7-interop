@@ -38,7 +38,7 @@ The organisation exit codes in `otfabric/engineering` `standards/interoperabilit
 
 ## Fixtures and capabilities
 
-Fixtures follow [`fixtures/schema/fixture.schema.json`](../fixtures/schema/fixture.schema.json). A fixture's `requires` lists capability tokens; `internal/interop` skips a fixture with a missing capability explicitly (`skip-unsupported`), never as a pass. Differences between the two servers are in [compatibility.md](compatibility.md).
+Fixtures follow [`fixtures/schema/fixture.schema.json`](../fixtures/schema/fixture.schema.json). A fixture's `requires` lists capability tokens; `internal/interop` skips a fixture with a missing capability explicitly (`skip-unsupported`), never as a pass. Differences between the two servers are in [COMPATIBILITY.md](COMPATIBILITY.md).
 
 ## Our own stack (otfabric)
 
@@ -50,5 +50,5 @@ Added in 1.1, for this image only (the references are unchanged):
 - The state snapshot's `implementation` is that same object; the `server_ready` event carries `upstream`, `upstream_version` and `independent_engine`.
 - The image holds the compiled fixtures under `/fixtures`, so it starts without a mount.
 
-Its answers use the Siemens item return codes. One differs from the references, which send `0x0A` for a write to a read-only area: otfabric sends `0x03` (accessing the object not allowed), which interop-probe reports as `write-protected` where the `read-only-reject` fixture expects `address-out-of-range` ([compatibility.md](compatibility.md#known-differences-classified)). The fixture is unchanged.
+Its answers use the Siemens item return codes. One differs from the references, which send `0x0A` for a write to a read-only area: otfabric sends `0x03` (accessing the object not allowed), which interop-probe reports as `write-protected` where the `read-only-reject` fixture expects `address-out-of-range` ([COMPATIBILITY.md](COMPATIBILITY.md#known-differences-classified)), listed in `tests/known-bugs.tsv`. The fixture is unchanged.
 

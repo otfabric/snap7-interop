@@ -18,6 +18,35 @@ Tags are immutable. A fix is a new version.
 
 ---
 
+## v0.6.0
+
+**Date:** 2026-11-06
+**Previous release:** v0.5.0
+
+### Summary
+
+The repository layout of every otfabric `*-interop` harness (`engineering/docs/own-stack-rollout.md`). Image names, the container contract and the fixtures are unchanged.
+
+### Changed
+
+- `servers/` is now `adapters/` (`adapters/native`, `adapters/python`); `docs/compatibility.md` is `docs/COMPATIBILITY.md`.
+- `scripts/lib.sh`, `scripts/smoke.sh <adapter>` and `scripts/interop.sh <adapter-a> <adapter-b>` replace `scripts/interop-run.sh` and the Makefile's `_smoke-run`. `image_of` takes `ADAPTER_IMAGE_<adapter>`, and `VERSION=vX.Y.Z` tests the images of a release. The smoke test now also checks that a missing fixture is refused before readiness, that `server_ready` is logged, and that SIGTERM stops the server with exit code 0.
+- The results writer takes each server's adapter and image. The references' independence comes from `versions.yaml`, and any other image's from what it reports (`version`). A failing step listed in `tests/known-bugs.tsv` is a `known-difference` with a waiver; an entry that no longer reproduces fails the run.
+- The otfabric self-test uses these scripts; `own/go-s7comm/selftest.sh`, `verdict.py` and `known-differences.tsv` are gone. Its one known difference (read-only write, `0x03` against `0x0A`) is in `tests/known-bugs.tsv`.
+
+### Added
+
+- `tests/cases.tsv` (the fixtures `scripts/interop.sh` runs) and `tests/known-bugs.tsv`, checked against the fixtures by `scripts/validate-fixtures.py`.
+- `scripts/check-versions.sh`: the pins of the Dockerfiles and `requirements.txt` against `versions.yaml`. Also `scripts/retry.sh`.
+- Makefile: `ADAPTERS`, `PUBLISHED_ADAPTERS`, `all`, `validate`, `documents`, `smoke`, `capabilities` (`interop-probe capabilities`), `print-adapters`, `print-published-adapters`, `buildx-setup`, `buildx`, `publish-arch`, `publish-manifest`, `digests`, `clean`. The old target names still work.
+- `REQUIREMENTS.md` (R1 isolation, with `own/` as the one exception), `docs/FIXTURES.md` (the fixture catalog, moved from README), `docs/CAPABILITIES.md` (the capability matrix, moved from COMPATIBILITY, with otfabric), `licenses/` (LGPL-3.0 and GPL-3.0 texts for Snap7), `.dockerignore`, and the `policy.yml` workflow.
+
+### Breaking changes
+
+- None for consumers. A local script or CI job that calls `scripts/interop-run.sh` or paths under `servers/` must use `scripts/interop.sh native python` and `adapters/`.
+
+---
+
 ## v0.5.0
 
 **Date:** 2026-11-06

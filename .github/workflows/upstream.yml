@@ -48,11 +48,11 @@ jobs:
           - component: python-snap7
             kind: library
             target: candidate-python
-            recipe: servers/python
+            recipe: adapters/python
           - component: snap7
             kind: commit
             target: candidate-native
-            recipe: servers/native
+            recipe: adapters/native
     steps:
       - uses: actions/checkout@v7
 
@@ -118,14 +118,14 @@ jobs:
             ### To update
 
             - **python-snap7:** move `python_snap7.version` in `versions.yaml`, the pin in
-              `servers/python/requirements.txt` and the pin check in
+              `adapters/python/requirements.txt` and the pin check in
               `scripts/bootstrap-check.sh`. Reproduce the candidate with
               `make candidate-python CANDIDATE_VERSION=<version>`.
             - **Snap7 (commit):** move `native_snap7.revision` in `versions.yaml` and
-              `ARG SNAP7_REVISION` in `servers/native/Dockerfile` (and the pin check in
+              `ARG SNAP7_REVISION` in `adapters/native/Dockerfile` (and the pin check in
               `scripts/bootstrap-check.sh`). Reproduce the candidate with
               `make candidate-native CANDIDATE_SHA=<commit>`.
             - **Base image:** replace the digest in every file that pins it (`versions.yaml`
               and the Dockerfiles).
-            - Then run `make interop` and record the change in `docs/compatibility.md` and
+            - Then run `make interop` and record the change in `docs/COMPATIBILITY.md` and
               `RELEASE.md`.

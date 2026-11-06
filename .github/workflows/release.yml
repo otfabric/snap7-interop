@@ -154,7 +154,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: servers/${{ matrix.image }}/Dockerfile
+          file: adapters/${{ matrix.image }}/Dockerfile
           platforms: linux/${{ matrix.arch }}
           load: true
           provenance: false
@@ -176,7 +176,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: servers/${{ matrix.image }}/Dockerfile
+          file: adapters/${{ matrix.image }}/Dockerfile
           platforms: linux/${{ matrix.arch }}
           provenance: true
           sbom: true

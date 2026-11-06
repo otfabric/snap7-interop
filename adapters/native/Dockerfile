@@ -1,6 +1,6 @@
 # Multi-stage native Snap7 server.
 # Build from repository root (linux/amd64 or linux/arm64):
-#   docker buildx build --platform=linux/amd64 -f servers/native/Dockerfile -t snap7-interop-native:local .
+#   docker buildx build --platform=linux/amd64 -f adapters/native/Dockerfile -t snap7-interop-native:local .
 
 ARG DEBIAN_DIGEST=sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
 
@@ -24,7 +24,7 @@ RUN git clone "${SNAP7_REPO}" snap7 \
     && test "$(git rev-parse HEAD)" = "${SNAP7_REVISION}"
 
 # In-tree aarch64 makefile (upstream ships armv6/v7 only).
-COPY servers/native/snap7/aarch64_linux.mk /src/snap7/build/unix/aarch64_linux.mk
+COPY adapters/native/snap7/aarch64_linux.mk /src/snap7/build/unix/aarch64_linux.mk
 
 WORKDIR /src/snap7/build/unix
 RUN set -eux; \
@@ -48,7 +48,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=snap7-build /src/snap7 /src/snap7
-COPY servers/native /src/adapter
+COPY adapters/native /src/adapter
 
 WORKDIR /src/adapter/build
 RUN set -eux; \

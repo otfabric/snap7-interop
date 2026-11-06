@@ -30,15 +30,10 @@ This repository stays client-neutral: nothing outside `own/go-s7comm/` depends o
 - [Out of scope (and why)](#out-of-scope-and-why)
 - [Open TODOs](#open-todos)
 - [Core design](#core-design)
-- [Fixture catalog](#fixture-catalog)
-  - [Layout](#layout)
-  - [Canonical fixtures (interop matrix)](#canonical-fixtures-interop-matrix)
-  - [Invalid fixtures (compiler / schema gate)](#invalid-fixtures-compiler--schema-gate)
-  - [Adding a fixture](#adding-a-fixture)
+- [Fixtures](#fixtures)
 - [Published images (GHCR)](#published-images-ghcr)
 - [Container contract](#container-contract)
 - [Developer workflow](#developer-workflow)
-- [Fixture example](#fixture-example)
 - [Relationship with go-s7comm](#relationship-with-go-s7comm)
 - [Repository layout](#repository-layout)
 - [Documentation index](#documentation-index)
@@ -65,7 +60,7 @@ Normalized probe outcomes used in expectations:
 
 - `success` / `accepted`
 - `address-out-of-range`
-- `write-protected` (schema-ready; RO reject currently maps to `address-out-of-range` — see [docs/compatibility.md](docs/compatibility.md))
+- `write-protected` (schema-ready; RO reject currently maps to `address-out-of-range` — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md))
 - `unsupported`, `transport-failure`, `protocol-failure`
 
 Run the full black-box matrix locally:
@@ -102,7 +97,7 @@ Client API mapping for go-s7comm is in
 | Distinct wire code for “write-protected” (`0x03`) | **classified difference** | Stock Snap7 ResourceLess rejects as `0x0A`; both adapters match that surface |
 
 Do not encode unresolved assumptions into the fixture schema. Document
-differences in [docs/compatibility.md](docs/compatibility.md).
+differences in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
 
 ## Open TODOs
 
@@ -111,7 +106,7 @@ Potential follow-ups (not blockers for current GHCR consumption):
 | Item | Notes |
 | --- | --- |
 | Wire `go-s7comm` CI to pinned GHCR digests | Downstream: pull both images, run the client suite, retain logs on failure |
-| AddressSanitizer / UndefinedBehaviorSanitizer CI for the native adapter | Optional hardening for `servers/native` |
+| AddressSanitizer / UndefinedBehaviorSanitizer CI for the native adapter | Optional hardening for `adapters/native` |
 | Timers / counters memory areas | Characterize both adapters, then extend schema + fixtures |
 | Identify / SZL / CPU state / diagnostics | Characterize both adapters before freezing expectations |
 | Block list / upload / download | Outside current memory interop contract |
@@ -141,62 +136,14 @@ source fixture (fixtures/canonical/*.json)
 - Adapters register compiled bytes; they do not re-interpret types.
 - Unsupported capabilities must surface as explicit skips, never silent downgrades.
 
-## Fixture catalog
+## Fixtures
 
-### Layout
-
-| Path | Role |
-| --- | --- |
-| `fixtures/schema/fixture.schema.json` | Draft 2020-12 schema for source fixtures |
-| `fixtures/canonical/` | Human-authored fixtures that must pass on both servers |
-| `fixtures/compiled/` | Golden compiled artifacts (update only via `make fixtures-update`) |
-| `fixtures/invalid/` | Fixtures that must fail validation with stable diagnostics |
-
-### Canonical fixtures (interop matrix)
-
-All of the following pass dual interop on the pinned native and Python images.
-
-| ID | Description |
-| --- | --- |
-| `basic-db` | Smoke DB1 with a short hex prefix; primary health/smoke fixture |
-| `write-cycle` | Accepted write mutates DB1 and is visible on subsequent read |
-| `multiple-dbs` | Two DBs with distinct patterns (ReadDB/WriteDB) |
-| `markers-io` | Markers, inputs, and outputs (ReadMerkers/ReadInputs/ReadOutputs) |
-| `typed-values` | DB + markers with typed scalar patches |
-| `integer-boundaries` | Signed/unsigned integer boundary bytes (big-endian) |
-| `floating-point` | IEEE-754 float32/float64 patterns (big-endian) |
-| `bit-access` | Bit reads and writes within a DB byte |
-| `unaligned-range` | Unaligned multi-byte reads across odd offsets |
-| `last-valid-byte` | Read at the last valid byte of a DB |
-| `out-of-range` | Out-of-range read/write rejected as `address-out-of-range` |
-| `read-only-reject` | Write to read-only DB rejected; memory unchanged on follow-up read |
-| `large-read` | Large single-request DB read within negotiated PDU |
-| `concurrent-reads` | Multiple simultaneous clients read identical bytes |
-| `reconnect-state` | Write, reconnect client, observe preserved server memory |
-
-Source: `fixtures/canonical/<id>.json`  
-Compiled: `fixtures/compiled/<id>.compiled.json`
-
-### Invalid fixtures (compiler / schema gate)
-
-These must **fail** `fixturectl validate` (used by `make test`):
-
-| File | Intent |
-| --- | --- |
-| `invalid-bounds.json` | Hex initializer exceeds declared area size |
-| `invalid-duplicate-area.json` | Duplicate DB1 areas rejected |
-| `invalid-overlap.json` | Typed patches overlap without explicit replace |
-| `invalid-type-range.json` | `uint8` value outside 0..255 |
-
-### Adding a fixture
-
-1. Author `fixtures/canonical/<id>.json` against the schema.
-2. Declare `requires` capabilities the servers must advertise.
-3. Add expectations with normalized outcomes or hex payloads.
-4. Run `make fixtures-update` then `make fixtures-check`.
-5. Run `FIXTURE=<id> make interop` and keep both servers green.
-6. Document differences in `docs/compatibility.md` if needed.
-7. Update this catalog and [docs/go-s7comm-coverage.md](docs/go-s7comm-coverage.md).
+Fifteen canonical fixtures (DB, markers, inputs and outputs; bits, typed values,
+boundaries, out-of-range and read-only rejects, concurrent readers, reconnect,
+a large read) define what both servers serve and what the probe expects. The
+catalog, the layout of `fixtures/`, the invalid fixtures and how to add one:
+[docs/FIXTURES.md](docs/FIXTURES.md). Capability tokens:
+[docs/CAPABILITIES.md](docs/CAPABILITIES.md).
 
 ## Published images (GHCR)
 
@@ -274,14 +221,23 @@ python:  localhost:2102 → container:102
 
 ```bash
 make help
-make ci                 # lint, tests, fixture goldens, Python checks
-make images             # build both local images
-make smoke-native       # native read/write smoke
-make smoke-python
-make interop            # full dual-server matrix + reports/
+make ci                 # lint, tests, fixture goldens, case lists, version pins (no Docker)
+make images             # build every adapter image (ADAPTERS, default: native python)
+make smoke              # container-contract smoke test of each (scripts/smoke.sh <adapter>)
+make interop            # every case of tests/cases.tsv on both servers (scripts/interop.sh native python)
+make documents          # check reports/results.json against the schema and the run rules
+make capabilities       # the capability tokens every server is run with
 make candidate-python CANDIDATE_VERSION=<v>  # smoke a newer python-snap7 (pins untouched)
 make candidate-native CANDIDATE_SHA=<commit>  # smoke another Snap7 commit
-make publish            # multi-arch push to GHCR
+make publish            # multi-arch push to GHCR (publish-arch, publish-manifest, digests per architecture)
+```
+
+`scripts/` takes any image through `ADAPTER_IMAGE_<adapter>`, and the images of a
+release with `VERSION=vX.Y.Z`:
+
+```bash
+VERSION=v0.6.0 scripts/smoke.sh native
+VERSION=v0.6.0 ADAPTER_IMAGE_otfabric=ghcr.io/otfabric/snap7-interop-otfabric:latest scripts/interop.sh native otfabric
 ```
 
 The daily Upstream workflow (`.github/workflows/upstream.yml`) compares the pins with
@@ -291,43 +247,8 @@ that are behind and keeps the issue "Upstream releases: pins behind the latest" 
 Architecture override:
 
 ```bash
-BUILD_PLATFORM=linux/arm64 make smoke-native
+BUILD_PLATFORM=linux/arm64 make smoke interop
 ```
-
-## Fixture example
-
-Minimal source shape (see `fixtures/canonical/basic-db.json` for a real fixture):
-
-```json
-{
-  "$schema": "../schema/fixture.schema.json",
-  "schemaVersion": "1.0.0",
-  "id": "basic-db",
-  "description": "Single zero-filled DB1 with a short hex prefix for smoke reads",
-  "requires": ["area.db", "operation.read"],
-  "server": { "rack": 0, "slot": 2, "pduSize": 480 },
-  "areas": [
-    {
-      "type": "db",
-      "number": 1,
-      "size": 64,
-      "access": "read-write",
-      "initial": { "hex": "0102030405060708" }
-    }
-  ],
-  "expectations": [
-    {
-      "operation": "read",
-      "area": { "type": "db", "number": 1 },
-      "offset": 0,
-      "length": 8,
-      "result": { "hex": "0102030405060708" }
-    }
-  ]
-}
-```
-
-Typed values are compiled once into canonical bytes. Adapters do not encode types themselves.
 
 ## Relationship with go-s7comm
 
@@ -349,24 +270,32 @@ go-s7comm CI
 
 ```text
 snap7-interop/
-├── README.md / RELEASE.md / SECURITY.md / THIRD_PARTY_NOTICES.md / CONTRIBUTING.md
-├── Makefile / compose.yaml / versions.yaml
+├── README.md / REQUIREMENTS.md / RELEASE.md / SECURITY.md / THIRD_PARTY_NOTICES.md / CONTRIBUTING.md
+├── Makefile / compose.yaml / versions.yaml / licenses/
+├── adapters/{native,python}/    # the reference servers, one image each
+├── own/go-s7comm/               # our own stack (otfabric image), not a reference
 ├── fixtures/{schema,canonical,invalid,compiled}/
-├── tooling/{fixturectl,interop-probe}/
-├── servers/{native,python}/
-├── own/go-s7comm/      # our own stack (otfabric image), not a reference
+├── schemas/                     # interop-result-v1
+├── scripts/                     # lib.sh, smoke.sh, interop.sh, results writer, checks
+├── tests/{cases,known-bugs}.tsv
+├── tooling/{fixturectl,interop-probe}/  # fixture compiler and the harness's own S7 client (Go)
 ├── internal/{fixture,interop,s7client}/
-├── docs/{adr,compatibility.md,go-s7comm-coverage.md}/
-└── .github/workflows/
+├── docs/{CONTAINER_CONTRACT,FIXTURES,CAPABILITIES,COMPATIBILITY}.md, docs/adr/
+├── reports/                     # generated
+└── .github/workflows/           # ci, policy, release, upstream, own-go-s7comm
 ```
 
 ## Documentation index
 
 | Document | Purpose |
 | --- | --- |
-| [README.md](README.md) | Scope, fixtures, GHCR, open TODOs (this file) |
+| [README.md](README.md) | Scope, GHCR, open TODOs (this file) |
+| [REQUIREMENTS.md](REQUIREMENTS.md) | What the repository must and must not do (R1 isolation) |
 | [RELEASE.md](RELEASE.md) | Version changelog and release notes |
-| [docs/compatibility.md](docs/compatibility.md) | Upstream constraints and classified differences |
+| [docs/CONTAINER_CONTRACT.md](docs/CONTAINER_CONTRACT.md) | Environment, lifecycle, log, exit codes |
+| [docs/FIXTURES.md](docs/FIXTURES.md) | Fixture catalog and format, case lists |
+| [docs/CAPABILITIES.md](docs/CAPABILITIES.md) | Capability tokens per adapter |
+| [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) | Upstream constraints and classified differences |
 | [docs/go-s7comm-coverage.md](docs/go-s7comm-coverage.md) | Client API ↔ fixture map |
 | [docs/adr/](docs/adr/) | Architecture decisions |
 | [SECURITY.md](SECURITY.md) | Reporting + release-blocking scan policy |

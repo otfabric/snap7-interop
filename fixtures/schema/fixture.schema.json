@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/otfabric/snap7-interop/fixtures/schema/fixture.schema.json",
   "title": "snap7-interop source fixture",
-  "description": "Implementation-neutral source fixture for snap7-interop dual servers.\n\nAuthoring rules:\n- Declare only observable memory and black-box expectations; never encode adapter-specific quirks.\n- Typed scalars go in area.values; the canonical compiler encodes them to bytes. Adapters must not re-interpret types.\n- List every needed capability in requires so unsupported servers skip explicitly instead of silently downgrading.\n- Prefer hex payloads in expectations for stable goldens.\n- Document classified differences in notes and docs/compatibility.md, not by weakening expectations.\n\nWorkflow: author under fixtures/canonical/, then make fixtures-update && make fixtures-check, then FIXTURE=<id> make interop.",
+  "description": "Implementation-neutral source fixture for snap7-interop dual servers.\n\nAuthoring rules:\n- Declare only observable memory and black-box expectations; never encode adapter-specific quirks.\n- Typed scalars go in area.values; the canonical compiler encodes them to bytes. Adapters must not re-interpret types.\n- List every needed capability in requires so unsupported servers skip explicitly instead of silently downgrading.\n- Prefer hex payloads in expectations for stable goldens.\n- Document classified differences in notes and docs/COMPATIBILITY.md, not by weakening expectations.\n\nWorkflow: author under fixtures/canonical/, then make fixtures-update && make fixtures-check, then FIXTURE=<id> make interop.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "id", "description", "server", "areas"],
@@ -46,7 +46,7 @@
     },
     "requires": {
       "type": "array",
-      "description": "Capability tokens the server must advertise. Missing capabilities cause an explicit skip, never a silent pass.\n\nKnown tokens:\n- area.db, area.markers, area.inputs, area.outputs\n- operation.read, operation.write, operation.bit\n- operation.concurrent-read, operation.reconnect\n- access.read-only-enforce\n\nSee docs/compatibility.md for the shared capability matrix.",
+      "description": "Capability tokens the server must advertise. Missing capabilities cause an explicit skip, never a silent pass.\n\nKnown tokens:\n- area.db, area.markers, area.inputs, area.outputs\n- operation.read, operation.write, operation.bit\n- operation.concurrent-read, operation.reconnect\n- access.read-only-enforce\n\nSee docs/CAPABILITIES.md for the capability matrix.",
       "items": {
         "type": "string",
         "minLength": 1,
@@ -374,7 +374,7 @@
     },
     "normalizedOutcome": {
       "title": "Normalized probe outcome",
-      "description": "Adapter-independent result token used when the expectation is about success/failure class rather than exact bytes.\n\nNotes:\n- success / accepted: operation completed as expected (reads often use byte payloads instead)\n- address-out-of-range: span outside registered area, or current RO-reject surface (item 0x0A)\n- write-protected: schema-ready for item 0x03; stock Snap7 ResourceLess RO rejects currently map to address-out-of-range — see docs/compatibility.md\n- unsupported / transport-failure / protocol-failure: reserved normalized classes for skips and hard failures",
+      "description": "Adapter-independent result token used when the expectation is about success/failure class rather than exact bytes.\n\nNotes:\n- success / accepted: operation completed as expected (reads often use byte payloads instead)\n- address-out-of-range: span outside registered area, or current RO-reject surface (item 0x0A)\n- write-protected: schema-ready for item 0x03; stock Snap7 ResourceLess RO rejects currently map to address-out-of-range — see docs/COMPATIBILITY.md\n- unsupported / transport-failure / protocol-failure: reserved normalized classes for skips and hard failures",
       "type": "string",
       "enum": [
         "accepted",

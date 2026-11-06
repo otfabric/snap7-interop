@@ -31,15 +31,17 @@ digest.
 
 ## Self-test
 
-`selftest.sh` runs `interop-probe` on every compiled fixture with a reference
-image in the first endpoint and this image in the second. The reference must pass
-every step. A failing step of this image passes only when
-`known-differences.tsv` lists the fixture, the step and the outcome it returned
-(`verdict.py`).
+The harness's own scripts test this image like any adapter, through
+`ADAPTER_IMAGE_otfabric`: `scripts/smoke.sh otfabric` (the container-contract
+smoke test) and `scripts/interop.sh <reference> otfabric` for each reference,
+which runs every case of `tests/cases.tsv` with interop-probe against the
+reference and this image. The reference must pass every step. A failing step of
+this image passes only as a known difference listed in `tests/known-bugs.tsv`,
+recorded with a waiver in `results.json`.
 
 | Fixture | Step | otfabric | References | Why |
 |---|---|---|---|---|
-| `read-only-reject` | 1 (write to a read-only DB) | `write-protected` (item code `0x03`) | `address-out-of-range` (`0x0A`) | go-s7comm uses the Siemens code, "accessing the object not allowed"; the references' `0x0A` comes from Snap7's ResourceLess callback ([compatibility.md](../../docs/compatibility.md)) |
+| `read-only-reject` | 1 (write to a read-only DB) | `write-protected` (item code `0x03`) | `address-out-of-range` (`0x0A`) | go-s7comm uses the Siemens code, "accessing the object not allowed"; the references' `0x0A` comes from Snap7's ResourceLess callback ([COMPATIBILITY.md](../../docs/COMPATIBILITY.md)) |
 
 ## Local use
 
@@ -51,8 +53,8 @@ make -f own/go-s7comm/Makefile image smoke interop
 
 `image` builds the latest go-s7comm release (`UPSTREAM_VERSION=vX.Y.Z` to choose);
 `interop` tests against the reference images of the latest harness tag
-(`VERSION=vX.Y.Z` to choose). Reports land in `reports/own/`.
+(`VERSION=vX.Y.Z` to choose). Reports land in `reports/own/<reference>/`.
 
-Last local run, 2026-11-06, linux/arm64, go-s7comm v0.10.0 against v0.4.2:
-smoke passed; 28 fixture runs passed, 2 known differences (`read-only-reject`
-against each reference), 0 failed.
+Last local run, 2026-11-06, linux/arm64, go-s7comm v0.10.0 against v0.5.0:
+smoke passed; against each reference 14 pass, 1 known difference
+(`read-only-reject`), 0 fail.

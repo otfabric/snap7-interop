@@ -85,8 +85,8 @@ publish_one() {
     .
 }
 
-publish_one servers/native/Dockerfile "${NATIVE_REPO}"
-publish_one servers/python/Dockerfile "${PYTHON_REPO}"
+publish_one adapters/native/Dockerfile "${NATIVE_REPO}"
+publish_one adapters/python/Dockerfile "${PYTHON_REPO}"
 
 mkdir -p dist/release
 {

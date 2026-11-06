@@ -12,8 +12,8 @@ Prints key=value lines (the format of $GITHUB_OUTPUT):
     update=yes|no
     source=<where the latest was looked up>
 
-python-snap7 (servers/python) is compared with the latest stable PyPI release;
-pre-releases and yanked releases are never "latest". Snap7 (servers/native)
+python-snap7 (adapters/python) is compared with the latest stable PyPI release;
+pre-releases and yanked releases are never "latest". Snap7 (adapters/native)
 is pinned by commit of the SCADACS fork, which has no release tags, and is
 compared with the HEAD of its default branch. Nothing is modified.
 """
@@ -61,7 +61,7 @@ def same_pin(pin, path, pattern):
 
 def python_snap7():
     pin = manifest("python_snap7", "version")
-    same_pin(pin, "servers/python/requirements.txt", r"^python-snap7==(\S+)")
+    same_pin(pin, "adapters/python/requirements.txt", r"^python-snap7==(\S+)")
     releases = json.loads(fetch("https://pypi.org/pypi/python-snap7/json"))["releases"]
     live = [v for v, files in releases.items() if files and not all(f.get("yanked") for f in files)]
     stable = [v for v in live if key(v) is not None]
@@ -73,7 +73,7 @@ def python_snap7():
 
 def snap7():
     pin = manifest("native_snap7", "revision")
-    same_pin(pin, "servers/native/Dockerfile", r"^ARG SNAP7_REVISION=(\S+)")
+    same_pin(pin, "adapters/native/Dockerfile", r"^ARG SNAP7_REVISION=(\S+)")
     head = subprocess.check_output(["git", "ls-remote", SNAP7_REPO, "HEAD"], text=True).split()[0]
     return pin, head, head, "yes" if head != pin else "no", "HEAD of SCADACS/snap7"
 

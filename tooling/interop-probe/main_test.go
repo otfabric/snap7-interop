@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 
@@ -218,5 +220,19 @@ func TestRunCommandDefaultReportDir(t *testing.T) {
 	})
 	if code != 1 || !strings.Contains(stdout, filepath.Join("reports", "")) {
 		t.Fatalf("%d, %q", code, stdout)
+	}
+}
+
+func TestCapabilities(t *testing.T) {
+	var out bytes.Buffer
+	if code := cmdCapabilities(&out); code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 10 || lines[0] != "access.read-only-enforce" || !sort.StringsAreSorted(lines) {
+		t.Fatalf("capabilities = %q", lines)
+	}
+	if code := run([]string{"capabilities"}); code != 0 {
+		t.Fatalf("run capabilities: exit %d", code)
 	}
 }

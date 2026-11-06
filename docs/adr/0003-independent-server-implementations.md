@@ -30,4 +30,4 @@ Keep server implementations independent.
 
 - Duplicate lifecycle wiring is acceptable; shared protocol libraries are not.
 - Build-time checks must prove the Python image has no native Snap7 dependency.
-- Divergence is documented in `docs/compatibility.md`, never hidden.
+- Divergence is documented in `docs/COMPATIBILITY.md`, never hidden.

@@ -8,7 +8,7 @@ This maps public client primitives to `snap7-interop` fixtures. Fixtures gate
 black-box behavior of the two servers. Wiring pinned GHCR images into
 `go-s7comm` CI is listed under [README open TODOs](../README.md#open-todos).
 
-Fixture catalog: [README.md § Fixture catalog](../README.md#fixture-catalog).
+Fixture catalog: [FIXTURES.md](FIXTURES.md).
 
 ## Covered read/write primitives
 
@@ -24,7 +24,7 @@ Fixture catalog: [README.md § Fixture catalog](../README.md#fixture-catalog).
 | Unaligned byte ranges | DB | `unaligned-range` | covered |
 | Last valid byte | DB | `last-valid-byte` | covered |
 | Out-of-range read/write | DB | `out-of-range` | covered |
-| Rejected write (read-only) | DB | `read-only-reject` | covered (normalized `address-out-of-range`; see [compatibility.md](compatibility.md)) |
+| Rejected write (read-only) | DB | `read-only-reject` | covered (normalized `address-out-of-range`; see [COMPATIBILITY.md](COMPATIBILITY.md)) |
 | Large read within PDU | DB | `large-read` | covered |
 | Concurrent readers | DB | `concurrent-reads` | covered |
 | Reconnect + preserved state | DB | `reconnect-state` | covered |

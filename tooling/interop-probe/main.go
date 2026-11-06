@@ -5,8 +5,10 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -28,6 +30,8 @@ func run(args []string) int {
 		return cmdSmoke(args[1:])
 	case "run", "interop":
 		return cmdRun(args[1:])
+	case "capabilities":
+		return cmdCapabilities(os.Stdout)
 	case "help", "-h", "--help":
 		usage()
 		return 0
@@ -43,6 +47,7 @@ func usage() {
 Usage:
   interop-probe smoke [flags]
   interop-probe run --fixture FILE --native ADDR --python ADDR [--out DIR]
+  interop-probe capabilities     (the capability tokens every server is run with)
 
 Smoke flags:
   -addr HOST:PORT       (default 127.0.0.1:1102)
@@ -158,4 +163,21 @@ func cmdRun(args []string) int {
 func fail(format string, args ...any) int {
 	fmt.Fprintf(os.Stderr, "FAIL: "+format+"\n", args...)
 	return 1
+}
+
+// cmdCapabilities prints the capability tokens the runner gives every server,
+// one per line, sorted: a fixture that requires another one is skipped as
+// skip-unsupported (docs/CAPABILITIES.md).
+func cmdCapabilities(w io.Writer) int {
+	tokens := make([]string, 0, len(interop.DefaultCapabilities))
+	for t, ok := range interop.DefaultCapabilities {
+		if ok {
+			tokens = append(tokens, t)
+		}
+	}
+	sort.Strings(tokens)
+	for _, t := range tokens {
+		fmt.Fprintln(w, t)
+	}
+	return 0
 }

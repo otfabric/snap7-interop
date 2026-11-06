@@ -20,12 +20,16 @@ UPSTREAM_SHA ?= $(shell sha=$$(git ls-remote --tags https://github.com/otfabric/
 image:
 	docker build --platform=$(BUILD_PLATFORM) --build-arg BASE_REGISTRY=$(BASE_REGISTRY) --build-arg UPSTREAM_VERSION=$(UPSTREAM_VERSION) --build-arg UPSTREAM_SHA=$(UPSTREAM_SHA) --build-arg ADAPTER_VERSION=$(UPSTREAM_VERSION) --tag $(IMAGE) --file own/go-s7comm/Dockerfile .
 
-# The contract smoke test of the top-level Makefile: read and write on basic-db.
-smoke:
-	$(MAKE) probe-bin _smoke-run IMAGE=$(IMAGE) HOST_PORT=3102 RUN_PLATFORM=--platform=$(BUILD_PLATFORM) LABEL=otfabric
+export VERSION BUILD_PLATFORM
+export ADAPTER_IMAGE_otfabric = $(IMAGE)
 
-# Every compiled fixture, with interop-probe, against each reference image of
-# $(VERSION) beside this image; accepted differences in known-differences.tsv.
+# The container-contract smoke test (scripts/smoke.sh).
+smoke:
+	$(MAKE) probe-bin
+	HOST_PORT=3102 scripts/smoke.sh otfabric
+
+# Every case of tests/cases.tsv against each reference image of $(VERSION)
+# beside this image (scripts/interop.sh); known differences in tests/known-bugs.tsv.
 interop:
 	$(MAKE) probe-bin
-	OWN_IMAGE=$(IMAGE) REFERENCE_VERSION=$(VERSION) REFERENCES="$(REFERENCES)" BUILD_PLATFORM=$(BUILD_PLATFORM) own/go-s7comm/selftest.sh
+	for r in $(REFERENCES); do REPORT_DIR=reports/own/$$r scripts/interop.sh $$r otfabric || exit 1; done
