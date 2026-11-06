@@ -29,7 +29,7 @@ smoke:
 	HOST_PORT=3102 scripts/smoke.sh otfabric
 
 # Every case of tests/cases.tsv against each reference image of $(VERSION)
-# beside this image (scripts/interop.sh); known differences in tests/known-bugs.tsv.
+# beside this image (scripts/interop.sh); known differences in tests/known-differences.tsv.
 interop:
 	$(MAKE) probe-bin
 	for r in $(REFERENCES); do REPORT_DIR=reports/own/$$r scripts/interop.sh $$r otfabric || exit 1; done

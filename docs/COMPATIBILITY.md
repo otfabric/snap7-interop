@@ -52,6 +52,44 @@ The capability tokens and which adapter has them: [CAPABILITIES.md](CAPABILITIES
 
 | Topic | Native | Python | Interop handling |
 | --- | --- | --- | --- |
-| Distinct `write-protected` (item `0x03`) | ResourceLess callback fails as not-available (`0x0A`) | Matches native with `0x0A` | Fixture `read-only-reject` expects `address-out-of-range`; follow-up read proves bytes unchanged. Our own `otfabric` image (not a reference) sends `0x03`, reported as `write-protected`: listed in `tests/known-bugs.tsv` |
+| Distinct `write-protected` (item `0x03`) | ResourceLess callback fails as not-available (`0x0A`) | Matches native with `0x0A` | Fixture `read-only-reject` expects `address-out-of-range`; follow-up read proves bytes unchanged. Our own `otfabric` image (not a reference) sends `0x03`, reported as `write-protected`: an intentional difference, listed in `tests/known-differences.tsv` ([below](#write-to-a-read-only-area-0x03-and-0x0a)) |
 | Identify / SZL / CPU state | Upstream-specific | Upstream-specific | Deferred — not in fixture matrix |
 | Timers / counters | Deferred | Deferred | Not in schema v1 until characterized |
+
+### Write to a read-only area: `0x03` and `0x0A`
+
+The `read-only-reject` fixture records what Snap7 and python-snap7 do, not
+Siemens conformance. Both references answer a write to a read-only DB with item
+code `0x0A`; our `otfabric` image answers `0x03`. That is an intentional
+semantic difference, not a bug on either side.
+
+| Source | `0x03` | `0x05` | `0x0A` |
+|---|---|---|---|
+| Siemens, STEP 7 V20, [Use of FETCH/WRITE (S7-300, S7-400)](https://docs.tia.siemens.cloud/r/en-us/v20/editing-devices-and-networks/configure-networks/communication-via-connections/connection-types-s7-300-s7-400-s7-1500/fetch/write-mode-s7-300-s7-400/use-of-fetch/write-s7-300-s7-400), diagnostic-buffer codes | Object access is not allowed | Invalid address (syntax ID, range, type, bit number) | The object does not exist, or the range limit was exceeded |
+| Wireshark [packet-s7comm.c](https://github.com/wireshark/wireshark/blob/master/epan/dissectors/packet-s7comm.c), item return values | Accessing the object not allowed | Invalid address | Object does not exist |
+| Apache PLC4X S7 model, [DataTransportErrorCode](https://github.com/apache/plc4x/blob/develop/plc4go/protocols/s7/readwrite/model/DataTransportErrorCode.go) | `ACCESS_DENIED` | `INVALID_ADDRESS` | `NOT_FOUND` |
+| python-snap7 3.3.1 (latest release; the python adapter pins 3.2.1) `S7_RETURN_CODES` (client) | Accessing the object not allowed | Invalid address | Object does not exist |
+| Snap7 (SCADACS f6ff903) `s7_types.h` | not defined | `Code7AddressOutOfRange` | `Code7ResItemNotAvailable` |
+
+- The Siemens table is published for the FETCH/WRITE diagnostic buffer, not
+  explicitly for the S7comm Write Var item byte; its values and meanings agree
+  with the other sources.
+- Why the references send `0x0A`: Snap7 has no read-only areas. The native
+  adapter refuses the write in its ResourceLess callback, and Snap7 turns any
+  refused callback into `Code7ResItemNotAvailable` (`0x0A`). The python adapter
+  copies that surface on purpose. python-snap7's own `Server` has no read-only
+  areas at all.
+- `0x0A` also covers "range limit exceeded", so it is not wrong in every case.
+  For a valid address in an existing, readable DB that is refused only because
+  it is write-protected, `0x03` is the closer match.
+- A CPU can also refuse the whole job at header level: error class/code
+  `0x81/0x04` or `0x85` when PUT/GET is off, `0x83/0x04` on an S7-300
+  ([PLC4X, 2026-08-16](https://www.mail-archive.com/commits@plc4x.apache.org/msg24099.html)).
+  Connection-level access control is a different case from per-item write
+  protection; the fixtures do not normalise one into the other.
+- What a physical Siemens CPU sends per item for a write-protected DB is not
+  verified yet. The capture plan and the clarification questions to
+  [python-snap7](https://github.com/gijzelaerr/python-snap7/issues/976),
+  [Snap7 (SCADACS)](https://github.com/SCADACS/snap7/issues/26) and
+  [Apache PLC4X](https://github.com/apache/plc4x/discussions/2850) are tracked in
+  [otfabric/snap7-interop#19](https://github.com/otfabric/snap7-interop/issues/19).

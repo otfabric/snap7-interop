@@ -18,7 +18,7 @@ reported as `skip-unsupported`, never as a pass. The images have no
 | `operation.bit` | yes | yes | yes |  |
 | `operation.concurrent-read` | yes | yes | yes |  |
 | `operation.reconnect` | yes | yes | yes | Client reconnect; server memory preserved |
-| `access.read-only-enforce` | yes | yes | yes | Reject normalised as `address-out-of-range` for native and python (item `0x0A`); otfabric sends `0x03`, `write-protected` (tests/known-bugs.tsv) |
+| `access.read-only-enforce` | yes | yes | yes | Reject normalised as `address-out-of-range` for native and python (item `0x0A`); otfabric sends `0x03`, `write-protected`, an intentional difference (tests/known-differences.tsv, [COMPATIBILITY.md](COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)) |
 
 otfabric is our own go-s7comm server (`own/go-s7comm`), not a reference. The
 deferred areas and services (timers, counters, SZL, blocks) have no token: see

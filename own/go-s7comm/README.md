@@ -36,12 +36,12 @@ The harness's own scripts test this image like any adapter, through
 smoke test) and `scripts/interop.sh <reference> otfabric` for each reference,
 which runs every case of `tests/cases.tsv` with interop-probe against the
 reference and this image. The reference must pass every step. A failing step of
-this image passes only as a known difference listed in `tests/known-bugs.tsv`,
+this image passes only as a known difference listed in `tests/known-differences.tsv`,
 recorded with a waiver in `results.json`.
 
 | Fixture | Step | otfabric | References | Why |
 |---|---|---|---|---|
-| `read-only-reject` | 1 (write to a read-only DB) | `write-protected` (item code `0x03`) | `address-out-of-range` (`0x0A`) | go-s7comm uses the Siemens code, "accessing the object not allowed"; the references' `0x0A` comes from Snap7's ResourceLess callback ([COMPATIBILITY.md](../../docs/COMPATIBILITY.md)) |
+| `read-only-reject` | 1 (write to a read-only DB) | `write-protected` (item code `0x03`) | `address-out-of-range` (`0x0A`) | Intentional: go-s7comm uses the Siemens code, "object access is not allowed"; the references' `0x0A` comes from Snap7's ResourceLess callback ([COMPATIBILITY.md](../../docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)) |
 
 ## Local use
 

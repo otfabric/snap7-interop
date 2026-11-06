@@ -65,9 +65,10 @@ These must **fail** `fixturectl validate` (used by `make test`):
 `scripts/interop.sh <a> <b>` runs every fixture of [tests/cases.tsv](../tests/cases.tsv)
 against two servers and writes `reports/<fixture>/` and `reports/results.json`
 (interop-result-v1, one result `fixture.<id>` per fixture). A failing step that
-[tests/known-bugs.tsv](../tests/known-bugs.tsv) lists for the adapter that failed
+[tests/known-differences.tsv](../tests/known-differences.tsv) lists for the adapter that failed
 it is a `known-difference` with a waiver; an entry that no longer reproduces
-fails the run. The references have no entry.
+fails the run. Entries are classified differences, not bugs, each explained in
+[COMPATIBILITY.md](COMPATIBILITY.md). The references have no entry.
 
 ## Fixture example
 

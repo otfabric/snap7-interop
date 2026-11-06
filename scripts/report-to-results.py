@@ -3,7 +3,7 @@
 """Turn the fixture reports of a run into the organisation's interop-result-v1.
 
     scripts/report-to-results.py <reports dir> <results.json> <started> <reproduce command>
-        [--servers <adapter-a>=<image>,<adapter-b>=<image>] [--known tests/known-bugs.tsv]
+        [--servers <adapter-a>=<image>,<adapter-b>=<image>] [--known tests/known-differences.tsv]
         <fixture>=<ms>...
 
 interop-probe compares two servers: its first endpoint ("native" in
@@ -15,7 +15,7 @@ writes; results.json is derived from them. The fixtures of this run are named
 on the command line, so a report left by an earlier run does not count, and a
 fixture of this run without a report is an infrastructure error.
 
-A fixture whose failing steps are all listed in the known-bugs file, for the
+A fixture whose failing steps are all listed in the known-differences file, for the
 adapter that failed them, is a known difference with a waiver. A listed step
 that no longer fails is a stale waiver, which fails the run. The exit status
 is 1 when the run failed: a fail or infra-error, a stale waiver, or no pass
@@ -73,7 +73,7 @@ def implementation(adapter, image, refs, run=subprocess.run):
 
 
 def load_known(path):
-    """Rows of the known-bugs file: adapter, fixture, step, outcome, evidence, reason."""
+    """Rows of the known-differences file: adapter, fixture, step, outcome, evidence, reason."""
     if not path or not Path(path).exists():
         return []
     with open(path, encoding="utf-8") as fh:
@@ -106,7 +106,7 @@ def reason_of(report, outcome):
 
 
 def known_difference(fixture, report, adapters, known):
-    """The known-bugs rows that explain every failing step, or None."""
+    """The known-differences rows that explain every failing step, or None."""
     failing = list(failing_steps(report))
     if not failing:
         return None

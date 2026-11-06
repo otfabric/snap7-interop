@@ -17,7 +17,7 @@ This repository follows **otfabric/engineering policy 1.2**, profile **interoper
 | Settled design decisions | docs/adr/ |
 | What the repository must and must not do | REQUIREMENTS.md |
 | Fixtures, case lists | docs/FIXTURES.md, fixtures/canonical, tests/cases.tsv |
-| Known differences | tests/known-bugs.tsv, docs/COMPATIBILITY.md |
+| Known differences | tests/known-differences.tsv, docs/COMPATIBILITY.md |
 | Capability tokens | docs/CAPABILITIES.md |
 | Upstream constraints and classified differences | docs/COMPATIBILITY.md |
 | Client API to fixture mapping | docs/go-s7comm-coverage.md |

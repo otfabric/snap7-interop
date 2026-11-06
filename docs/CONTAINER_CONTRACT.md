@@ -50,5 +50,5 @@ Added in 1.1, for this image only (the references are unchanged):
 - The state snapshot's `implementation` is that same object; the `server_ready` event carries `upstream`, `upstream_version` and `independent_engine`.
 - The image holds the compiled fixtures under `/fixtures`, so it starts without a mount.
 
-Its answers use the Siemens item return codes. One differs from the references, which send `0x0A` for a write to a read-only area: otfabric sends `0x03` (accessing the object not allowed), which interop-probe reports as `write-protected` where the `read-only-reject` fixture expects `address-out-of-range` ([COMPATIBILITY.md](COMPATIBILITY.md#known-differences-classified)), listed in `tests/known-bugs.tsv`. The fixture is unchanged.
+Its answers use the Siemens item return codes. One differs from the references, which send `0x0A` for a write to a read-only area: otfabric sends `0x03` (accessing the object not allowed), which interop-probe reports as `write-protected` where the `read-only-reject` fixture expects `address-out-of-range` ([COMPATIBILITY.md](COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)). That is an intentional difference, listed in `tests/known-differences.tsv`; the fixture is unchanged.
 
