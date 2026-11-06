@@ -18,6 +18,30 @@ Tags are immutable. A fix is a new version.
 
 ---
 
+## v0.6.1
+
+**Date:** 2026-11-06
+**Previous release:** v0.6.0
+
+### Summary
+
+The read-only write difference of the otfabric image (item code `0x03` where both references send `0x0A`) is reclassified as an intentional semantic difference and documented against the Siemens codes. Images, the container contract and the fixtures are unchanged.
+
+### Changed
+
+- `tests/known-bugs.tsv` is now `tests/known-differences.tsv`, the name the other `*-interop` harnesses use for classified differences of a pin. Its one entry gives the Siemens STEP 7 V20 *Use of FETCH/WRITE* page as evidence and says why the references send `0x0A`. `scripts/interop.sh`, `scripts/validate-fixtures.py` and the otfabric self-test read the new name; the waiver in `results.json` is unchanged.
+
+### Documentation
+
+- `docs/COMPATIBILITY.md`, section *Write to a read-only area*: the codes `0x03`, `0x05` and `0x0A` in Siemens, Wireshark, PLC4X, python-snap7 and Snap7; why Snap7 sends `0x0A`; that `0x0A` also means "range limit exceeded"; and that header-level refusals (`0x81/0x04`, `0x85`, `0x83/0x04` on an S7-300) are a different case from per-item write protection.
+- `README.md`, `docs/CAPABILITIES.md`, `docs/CONTAINER_CONTRACT.md`, `docs/FIXTURES.md` and `own/go-s7comm/README.md` link to it. The README's open item is now the real-CPU capture (#19), not "only if Snap7 can emit `0x03`".
+
+### Open
+
+- Real-CPU evidence and the clarification questions to python-snap7, Snap7 (SCADACS) and Apache PLC4X: #19.
+
+---
+
 ## v0.6.0
 
 **Date:** 2026-11-06

@@ -65,7 +65,7 @@ require_dir adapters/python/snap7_interop_server
 require_dir own/go-s7comm
 require_dir reports
 require_file tests/cases.tsv
-require_file tests/known-bugs.tsv
+require_file tests/known-differences.tsv
 require_file REQUIREMENTS.md
 require_file licenses/LGPL-3.0.txt
 require_dir docs/adr

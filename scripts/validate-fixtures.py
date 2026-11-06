@@ -6,7 +6,7 @@
 
 tests/cases.tsv must name every canonical fixture once, with the capability
 tokens the fixture requires, and a compiled golden must exist for each.
-tests/known-bugs.tsv rows must name a listed fixture, an existing step and an
+tests/known-differences.tsv rows must name a listed fixture, an existing step and an
 outcome interop-probe reports, with an http(s) evidence URL. The fixtures
 themselves are validated by fixturectl (make test, make fixtures-check).
 """
@@ -51,19 +51,19 @@ def problems(root=ROOT):
             out.append("cases.tsv: %s has no compiled golden" % fid)
     for fid in sorted(set(fixtures) - seen):
         out.append("cases.tsv: canonical fixture %s is not listed" % fid)
-    for row in rows(root / "tests" / "known-bugs.tsv"):
+    for row in rows(root / "tests" / "known-differences.tsv"):
         if len(row) != 6:
-            out.append("known-bugs.tsv: %r: want 6 tab-separated columns" % row)
+            out.append("known-differences.tsv: %r: want 6 tab-separated columns" % row)
             continue
         adapter, fid, step, outcome, evidence, _ = row
         if fid not in seen:
-            out.append("known-bugs.tsv: %s: %s is not a case" % (adapter, fid))
+            out.append("known-differences.tsv: %s: %s is not a case" % (adapter, fid))
         elif not step.isdigit() or int(step) >= len(fixtures[fid].get("expectations", [])):
-            out.append("known-bugs.tsv: %s %s: no step %s" % (adapter, fid, step))
+            out.append("known-differences.tsv: %s %s: no step %s" % (adapter, fid, step))
         if outcome not in OUTCOMES:
-            out.append("known-bugs.tsv: %s %s: unknown outcome %s" % (adapter, fid, outcome))
+            out.append("known-differences.tsv: %s %s: unknown outcome %s" % (adapter, fid, outcome))
         if not evidence.startswith(("https://", "http://")):
-            out.append("known-bugs.tsv: %s %s: evidence is not a URL" % (adapter, fid))
+            out.append("known-differences.tsv: %s %s: evidence is not a URL" % (adapter, fid))
     return out
 
 
@@ -72,7 +72,7 @@ def main():
     for p in bad:
         print("FAIL " + p, file=sys.stderr)
     if not bad:
-        print("ok   tests/cases.tsv and tests/known-bugs.tsv agree with the fixtures")
+        print("ok   tests/cases.tsv and tests/known-differences.tsv agree with the fixtures")
     return 1 if bad else 0
 
 

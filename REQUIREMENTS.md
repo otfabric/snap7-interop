@@ -21,7 +21,7 @@ protocol-testing framework ([README.md](README.md#out-of-scope-and-why)).
   library under test, and contains no test logic or expectation specific to one.
   The one exception is `own/` with its workflow: images of OT Fabric's own stacks,
   published for others to test against (`own/go-s7comm/README.md`). The rest of
-  the repository knows them only as an adapter name in `tests/known-bugs.tsv` and
+  the repository knows them only as an adapter name in `tests/known-differences.tsv` and
   through `ADAPTER_IMAGE_<adapter>`, and they are not part of a release. CI checks
   that nothing outside `own/` uses go-s7comm.
 - R1.2 A consumer depends on published images and the documented contract only.

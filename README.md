@@ -60,7 +60,7 @@ Normalized probe outcomes used in expectations:
 
 - `success` / `accepted`
 - `address-out-of-range`
-- `write-protected` (schema-ready; RO reject currently maps to `address-out-of-range` — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md))
+- `write-protected` (item `0x03`; the references send `0x0A` for a read-only write, so `read-only-reject` expects `address-out-of-range` — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a))
 - `unsupported`, `transport-failure`, `protocol-failure`
 
 Run the full black-box matrix locally:
@@ -94,7 +94,7 @@ Client API mapping for go-s7comm is in
 | Block list / upload / download | **deferred** | Outside memory interop contract |
 | Client-only APIs (`ProbeReadableRanges`, `CompareRead`, discovery, rack/slot probe) | **not fixture-gated here** | Orchestration belongs in the client; servers covered by OOR/span/memory fixtures |
 | Multi-PDU client chunking beyond negotiated PDU | **client-side** | `large-read` covers a large *single* request; go-s7comm chunks larger spans |
-| Distinct wire code for “write-protected” (`0x03`) | **classified difference** | Stock Snap7 ResourceLess rejects as `0x0A`; both adapters match that surface |
+| Distinct wire code for “write-protected” (`0x03`) | **classified difference** | Stock Snap7 ResourceLess rejects as `0x0A`; both adapters match that surface. The otfabric image sends the Siemens `0x03` ([COMPATIBILITY.md](docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)) |
 
 Do not encode unresolved assumptions into the fixture schema. Document
 differences in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
@@ -110,7 +110,7 @@ Potential follow-ups (not blockers for current GHCR consumption):
 | Timers / counters memory areas | Characterize both adapters, then extend schema + fixtures |
 | Identify / SZL / CPU state / diagnostics | Characterize both adapters before freezing expectations |
 | Block list / upload / download | Outside current memory interop contract |
-| Distinct `write-protected` item code (`0x03`) | Only if Snap7 can emit it for RO; today RO reject is `0x0A` → `address-out-of-range` |
+| Real-CPU read-only write capture | What a physical S7-1200/S7-300/S7-1500 sends per item for a write-protected DB ([#19](https://github.com/otfabric/snap7-interop/issues/19)) |
 | Optimized S7-1200/1500 DB addressing | Out of v1 scope until characterized |
 
 When closing a TODO, update this table and any related fixture/docs.
@@ -188,7 +188,7 @@ docker run --rm -p 3102:102 --read-only \
   ghcr.io/otfabric/snap7-interop-otfabric:latest
 ```
 
-It is **not an independent implementation** and not part of a harness release. The manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release, and publishes `:<go-s7comm version>` and `:latest` from `main`. It answers a write to a read-only area with the Siemens code `0x03` where the references send `0x0A` (a known difference). Details: [own/go-s7comm/README.md](own/go-s7comm/README.md).
+It is **not an independent implementation** and not part of a harness release. The manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release, and publishes `:<go-s7comm version>` and `:latest` from `main`. It answers a write to a read-only area with the Siemens code `0x03` where the references send `0x0A` (an intentional, classified difference). Details: [own/go-s7comm/README.md](own/go-s7comm/README.md).
 
 ## Container contract
 
@@ -277,7 +277,7 @@ snap7-interop/
 ├── fixtures/{schema,canonical,invalid,compiled}/
 ├── schemas/                     # interop-result-v1
 ├── scripts/                     # lib.sh, smoke.sh, interop.sh, results writer, checks
-├── tests/{cases,known-bugs}.tsv
+├── tests/{cases,known-differences}.tsv
 ├── tooling/{fixturectl,interop-probe}/  # fixture compiler and the harness's own S7 client (Go)
 ├── internal/{fixture,interop,s7client}/
 ├── docs/{CONTAINER_CONTRACT,FIXTURES,CAPABILITIES,COMPATIBILITY}.md, docs/adr/

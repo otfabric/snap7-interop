@@ -31,7 +31,7 @@ def convert(*reports, servers=rr.DEFAULT_SERVERS, known="", run=None):
             (path / "report.json").write_text(json.dumps(rep))
         known_path = None
         if known:
-            known_path = Path(d) / "known-bugs.tsv"
+            known_path = Path(d) / "known-differences.tsv"
             known_path.write_text(known)
         fixtures = [(r["fixtureId"], 5) for r in reports]
         doc = rr.convert(d, "2026-10-30T00:00:00Z", "2026-10-30T00:00:01Z", "make interop", fixtures,
@@ -123,7 +123,7 @@ class Convert(unittest.TestCase):
         self.assertEqual(doc["waivers"][0]["reproduced"], False)
         self.assertTrue(any("stale waiver" in p for p in interop_result.problems(doc)))
 
-    def test_known_bugs_of_adapters_not_in_the_run_are_ignored(self):
+    def test_known_differences_of_adapters_not_in_the_run_are_ignored(self):
         doc = convert(report("pass"), known=KNOWN)
         self.assertNotIn("waivers", doc)
 

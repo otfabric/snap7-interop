@@ -120,7 +120,7 @@ ci: ## Non-interactive CI entrypoint (no Docker): lint, tests, validate, build t
 	@$(MAKE) build
 	@echo "ci passed"
 
-validate: ## Check tests/cases.tsv and known-bugs.tsv against the fixtures, the pins against versions.yaml, the RELEASE.md notes
+validate: ## Check tests/cases.tsv and known-differences.tsv against the fixtures, the pins against versions.yaml, the RELEASE.md notes
 	@python3 scripts/validate-fixtures.py
 	@scripts/check-versions.sh
 	@scripts/release-notes.sh > /dev/null && echo "ok   RELEASE.md has the notes of interop_version"

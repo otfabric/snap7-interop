@@ -8,8 +8,8 @@
 # expectations against each and compares the two. The reports land in
 # REPORT_DIR/<fixture>/ (report.json, report.md, junit.xml, server logs) and
 # REPORT_DIR/results.json (interop-result-v1). A failing step listed in
-# tests/known-bugs.tsv for the adapter that failed it is a known difference.
-# The run fails on any other failure, on a stale known-bugs entry, and when
+# tests/known-differences.tsv for the adapter that failed it is a known difference.
+# The run fails on any other failure, on a stale known-differences entry, and when
 # nothing passed.
 #
 # Environment: VERSION (local or a release tag), ADAPTER_IMAGE_<adapter>,
@@ -54,8 +54,8 @@ while read -r id; do
   fi
 done < <(cases)
 
-# results.json decides: fail, infra-error, a stale known-bugs entry or no pass fails the run.
+# results.json decides: fail, infra-error, a stale known-differences entry or no pass fails the run.
 python3 scripts/report-to-results.py "${REPORT_DIR}" "${REPORT_DIR}/results.json" "${started}" \
   "VERSION=${VERSION} BUILD_PLATFORM=${BUILD_PLATFORM} FIXTURE=${FIXTURE:-} scripts/interop.sh ${a} ${b}" \
-  --servers "${a}=$(image_of "${a}"),${b}=$(image_of "${b}")" --known tests/known-bugs.tsv "${ran[@]}"
+  --servers "${a}=$(image_of "${a}"),${b}=$(image_of "${b}")" --known tests/known-differences.tsv "${ran[@]}"
 echo "[interop] ${a} ${b}: passed"

@@ -1,0 +1,18 @@
+# Classified differences between an adapter and the references, for
+# scripts/interop.sh (scripts/report-to-results.py).
+#
+# These are not bugs: each entry is a deliberate or upstream-imposed semantic
+# difference, documented in docs/COMPATIBILITY.md. A failing step listed here,
+# for the adapter that failed it, makes its fixture a known difference with a
+# waiver in results.json instead of a failure. An entry whose step passes in a
+# run with that adapter is stale and fails the run. The references (native,
+# python) have no entry: they pass every case.
+#
+# Columns, separated by tabs:
+#   1  adapter
+#   2  fixture ID
+#   3  step index in the fixture's expectations
+#   4  outcome that adapter returns (interop-probe's normalised outcome)
+#   5  evidence URL (the waiver's evidence in results.json)
+#   6  what differs and why (docs/COMPATIBILITY.md has the details)
+otfabric	read-only-reject	1	write-protected	https://docs.tia.siemens.cloud/r/en-us/v20/editing-devices-and-networks/configure-networks/communication-via-connections/connection-types-s7-300-s7-400-s7-1500/fetch/write-mode-s7-300-s7-400/use-of-fetch/write-s7-300-s7-400	intentional: item code 0x03 for a write to an existing, read-only DB (Siemens 03H "object access is not allowed"); both references send 0x0A because Snap7 maps every refused write to it (otfabric/snap7-interop#19)
