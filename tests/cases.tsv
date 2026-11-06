@@ -1,0 +1,24 @@
+# Cases of scripts/interop.sh: one per canonical fixture, in run order.
+#
+# Columns, separated by tabs:
+#   1  fixture  ID of fixtures/canonical/<id>.json; the stable result ID is fixture.<id>
+#   2  requires the fixture's capability tokens (docs/CAPABILITIES.md), as in the fixture
+#   3  what it checks
+#
+# make validate checks that this list and fixtures/canonical/ name the same
+# fixtures with the same capability tokens.
+basic-db	area.db,operation.read	Single zero-filled DB1 with a short hex prefix for smoke reads
+bit-access	area.db,operation.read,operation.write,operation.bit	Bit reads and writes within a DB byte
+concurrent-reads	area.db,operation.read,operation.concurrent-read	Multiple simultaneous clients read identical DB bytes
+floating-point	area.db,operation.read	IEEE-754 float32/float64 big-endian patterns
+integer-boundaries	area.db,operation.read	Signed/unsigned integer boundary values as compiled big-endian bytes
+large-read	area.db,operation.read	Large single-request DB read within negotiated PDU (go-s7comm chunks larger spans client-side)
+last-valid-byte	area.db,operation.read	Read the last valid byte of a DB
+markers-io	area.markers,area.inputs,area.outputs,operation.read,operation.write	Markers, inputs and outputs for ReadMerkers/ReadInputs/ReadOutputs
+multiple-dbs	area.db,operation.read,operation.write	Two DBs with distinct patterns for ReadDB/WriteDB coverage
+out-of-range	area.db,operation.read,operation.write	Out-of-range DB reads and writes must be rejected
+read-only-reject	area.db,operation.read,operation.write,access.read-only-enforce	Writes to read-only DB must be rejected; reads still succeed
+reconnect-state	area.db,operation.read,operation.write,operation.reconnect	Write, reconnect, and observe preserved server memory
+typed-values	area.db,area.markers,operation.read	DB and markers initialized with typed scalar patches
+unaligned-range	area.db,operation.read	Unaligned multi-byte reads across odd offsets
+write-cycle	area.db,operation.read,operation.write	Accepted write mutates DB1 and is visible on subsequent read

@@ -18,7 +18,7 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-servers/python/.venv/
+adapters/python/.venv/
 
 # Go
 coverage.out
@@ -28,7 +28,7 @@ cover.*
 **/testdata/fuzz/
 
 # CMake / native builds
-servers/native/build/
+adapters/native/build/
 cmake-build-*/
 
 # Runtime and reports

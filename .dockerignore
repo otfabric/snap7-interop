@@ -1,0 +1,11 @@
+.git
+.github
+reports
+bin
+dist
+**/build
+**/__pycache__
+**/.venv
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache

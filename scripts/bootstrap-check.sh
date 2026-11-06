@@ -44,7 +44,7 @@ require_file .gitignore
 require_file Makefile
 require_file compose.yaml
 require_file versions.yaml
-require_file servers/native/snap7/aarch64_linux.mk
+require_file adapters/native/snap7/aarch64_linux.mk
 require_file scripts/sbom.sh
 require_file scripts/scan.sh
 require_file scripts/check-notices.sh
@@ -60,11 +60,14 @@ require_dir fixtures/invalid
 require_dir fixtures/compiled
 require_dir tooling/fixturectl
 require_dir tooling/interop-probe
-require_dir servers/native/src
-require_dir servers/python/snap7_interop_server
-require_dir tests/conformance
-require_dir tests/integration
-require_dir tests/golden
+require_dir adapters/native/src
+require_dir adapters/python/snap7_interop_server
+require_dir own/go-s7comm
+require_dir reports
+require_file tests/cases.tsv
+require_file tests/known-bugs.tsv
+require_file REQUIREMENTS.md
+require_file licenses/LGPL-3.0.txt
 require_dir docs/adr
 require_dir .github/workflows
 require_dir internal/fixture
@@ -74,12 +77,17 @@ require_file tooling/fixturectl/main.go
 require_file tooling/interop-probe/main.go
 require_file internal/interop/runner.go
 require_file internal/s7client/client.go
-require_file scripts/interop-run.sh
-require_file servers/native/src/main.cpp
-require_file servers/native/CMakeLists.txt
-require_file servers/python/snap7_interop_server/main.py
-require_file servers/python/requirements.txt
-require_file servers/python/tests/test_no_native_lib.py
+require_file scripts/lib.sh
+require_file scripts/smoke.sh
+require_file scripts/interop.sh
+require_file scripts/retry.sh
+require_file scripts/check-versions.sh
+require_file scripts/validate-fixtures.py
+require_file adapters/native/src/main.cpp
+require_file adapters/native/CMakeLists.txt
+require_file adapters/python/snap7_interop_server/main.py
+require_file adapters/python/requirements.txt
+require_file adapters/python/tests/test_no_native_lib.py
 
 echo "==> checking ADRs"
 for adr in \
@@ -91,11 +99,14 @@ for adr in \
 do
   require_file "${adr}"
 done
-require_file docs/compatibility.md
+require_file docs/COMPATIBILITY.md
+require_file docs/CONTAINER_CONTRACT.md
+require_file docs/CAPABILITIES.md
+require_file docs/FIXTURES.md
 require_file docs/go-s7comm-coverage.md
 require_file docs/README.md
-require_file servers/native/README.md
-require_file servers/python/README.md
+require_file adapters/native/README.md
+require_file adapters/python/README.md
 
 echo "==> checking versions.yaml upstream pins"
 if grep -Eq 'revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"' versions.yaml; then
@@ -130,8 +141,8 @@ else
 fi
 
 echo "==> checking Dockerfiles exist"
-require_file servers/native/Dockerfile
-require_file servers/python/Dockerfile
+require_file adapters/native/Dockerfile
+require_file adapters/python/Dockerfile
 
 echo "==> checking compose service names"
 if grep -Eq '^[[:space:]]+native:' compose.yaml && grep -Eq '^[[:space:]]+python:' compose.yaml; then

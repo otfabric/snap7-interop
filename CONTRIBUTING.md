@@ -26,7 +26,9 @@ make lint
 make test
 make ci
 make images
+make smoke
 make interop
+make documents
 make sbom
 make scan
 ```
@@ -36,15 +38,15 @@ server/behavior changes) before declaring work complete.
 
 ## Fixtures
 
-- Catalog and scope: [README.md § Fixture catalog](README.md#fixture-catalog).
+- Catalog and scope: [docs/FIXTURES.md](docs/FIXTURES.md).
 - Source: `fixtures/canonical/` and `fixtures/invalid/`.
 - Compiled goldens: `fixtures/compiled/` — update **only** via
   `make fixtures-update`.
 - After adding or changing a canonical fixture:
   1. `make fixtures-update && make fixtures-check`
-  2. `FIXTURE=<id> make interop`
+  2. Add it to `tests/cases.tsv` (`make validate` checks the list), then `FIXTURE=<id> make interop`
   3. Update the README catalog + [docs/go-s7comm-coverage.md](docs/go-s7comm-coverage.md)
-  4. Record differences in [docs/compatibility.md](docs/compatibility.md)
+  4. Record differences in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
 - Invalid fixtures must produce stable diagnostics with stable error codes.
 
 ## Scope changes
@@ -52,7 +54,7 @@ server/behavior changes) before declaring work complete.
 If you expand coverage into a deferred area (see [Open TODOs](README.md#open-todos)):
 
 1. Characterize **both** adapters first.
-2. Document findings in `docs/compatibility.md`.
+2. Document findings in `docs/COMPATIBILITY.md`.
 3. Extend schema / capabilities only after semantics agree.
 4. Update README “What you can test”, “Out of scope”, and “Open TODOs”.
 

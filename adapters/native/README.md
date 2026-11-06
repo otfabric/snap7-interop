@@ -6,7 +6,7 @@ Published image: `ghcr.io/otfabric/snap7-interop-native`.
 
 Scope, fixture catalog, and out-of-scope topics:
 [repository README](../../README.md). Compatibility notes:
-[docs/compatibility.md](../../docs/compatibility.md).
+[docs/COMPATIBILITY.md](../../docs/COMPATIBILITY.md).
 
 ## Contract
 
@@ -21,7 +21,7 @@ SNAP_INTEROP_STATE_PATH
 ```
 
 Read-only fixtures use Snap7 ResourceLess RW callbacks (see compatibility notes).
-Multi-arch builds use `servers/native/snap7/aarch64_linux.mk` for `linux/arm64`.
+Multi-arch builds use `adapters/native/snap7/aarch64_linux.mk` for `linux/arm64`.
 
 ## Build
 

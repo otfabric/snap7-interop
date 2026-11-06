@@ -141,16 +141,20 @@ jobs:
             echo "- snap7-interop-${a}:${VERSION}" | tee -a "$GITHUB_STEP_SUMMARY"
           done
 
-      - name: Smoke, cross-stack self-test against the references
+      - name: Smoke, cross-stack self-test against the references, documents
         working-directory: harness
+        env:
+          ADAPTER_IMAGE_otfabric: ${{ env.OWN_IMAGE }}
         run: |
           set -o pipefail
           mkdir -p reports/own
           make probe-bin
-          make _smoke-run IMAGE="${OWN_IMAGE}" HOST_PORT=3102 RUN_PLATFORM="--platform=${BUILD_PLATFORM}" LABEL=otfabric 2>&1 | tee reports/own/smoke.log
-          REFERENCE_VERSION="${VERSION}" REFERENCES="native python" REPORT_DIR=reports/own \
-            own/go-s7comm/selftest.sh 2>&1 | tee reports/own/interop.log
-          grep -E '^\[interop\]|passed$' reports/own/smoke.log reports/own/interop.log | tee -a "$GITHUB_STEP_SUMMARY" || true
+          HOST_PORT=3102 scripts/smoke.sh otfabric 2>&1 | tee reports/own/smoke.log
+          for r in native python; do
+            REPORT_DIR="reports/own/${r}" scripts/interop.sh "${r}" otfabric 2>&1 | tee "reports/own/interop-${r}.log"
+            python3 scripts/interop_result.py "reports/own/${r}/results.json"
+          done
+          grep -hE 'passed$|results.json:' reports/own/*.log | tee -a "$GITHUB_STEP_SUMMARY" || true
 
       - name: Upload reports
         if: always()

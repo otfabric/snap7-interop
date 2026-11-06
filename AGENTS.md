@@ -15,8 +15,11 @@ This repository follows **otfabric/engineering policy 1.2**, profile **interoper
 | Container environment, lifecycle, exit codes | docs/CONTAINER_CONTRACT.md |
 | Pins (Snap7 revision, python-snap7, base image digests) | versions.yaml |
 | Settled design decisions | docs/adr/ |
-| Fixtures | fixtures/canonical, fixtures/schema/fixture.schema.json |
-| Upstream constraints and classified differences | docs/compatibility.md |
+| What the repository must and must not do | REQUIREMENTS.md |
+| Fixtures, case lists | docs/FIXTURES.md, fixtures/canonical, tests/cases.tsv |
+| Known differences | tests/known-bugs.tsv, docs/COMPATIBILITY.md |
+| Capability tokens | docs/CAPABILITIES.md |
+| Upstream constraints and classified differences | docs/COMPATIBILITY.md |
 | Client API to fixture mapping | docs/go-s7comm-coverage.md |
 | Our own stack image (otfabric, not a reference) | own/go-s7comm/README.md |
 
@@ -34,8 +37,8 @@ This repository follows **otfabric/engineering policy 1.2**, profile **interoper
 |---|---|
 | anything | `make ci` |
 | fixtures | `make fixtures-check` |
-| a server | `make images smoke-native smoke-python` |
-| behaviour across the two servers | `make interop` (Docker) |
+| an adapter (`adapters/<name>/`) | `make images smoke` |
+| behaviour across the two servers | `make interop documents` (Docker) |
 | third-party components | `make notices` |
 | `own/go-s7comm/` | `make -f own/go-s7comm/Makefile image smoke interop` (Docker) |
 

@@ -13,7 +13,8 @@ images and tooling. It must remain present before any published release.
 | License | LGPL-3.0-or-later |
 | Used by | `ghcr.io/otfabric/snap7-interop-native` (dynamically linked `libsnap7.so`) |
 
-The LGPL-3.0 text is copied into the native runtime image at
+The LGPL-3.0 text, and the GPL-3.0 text it supplements, are in
+[licenses/](licenses/). The LGPL-3.0 text is copied into the native runtime image at
 `/usr/share/doc/snap7/lgpl-3.0.txt`. Corresponding upstream notices (`lgpl-3.0.txt`,
 `gpl.txt`) ship in the pinned Snap7 source tree.
 
