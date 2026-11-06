@@ -236,3 +236,13 @@ func TestCapabilities(t *testing.T) {
 		t.Fatalf("run capabilities: exit %d", code)
 	}
 }
+
+type failWriter struct{}
+
+func (failWriter) Write([]byte) (int, error) { return 0, io.ErrClosedPipe }
+
+func TestCapabilitiesWriteError(t *testing.T) {
+	if code := cmdCapabilities(failWriter{}); code != 1 {
+		t.Fatalf("exit %d, want 1", code)
+	}
+}

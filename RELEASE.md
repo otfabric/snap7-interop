@@ -248,7 +248,7 @@ Prefer digest pins downstream (`docker buildx imagetools inspect …`).
 
 ## Known limitations
 
-- Read-only write rejects normalize to `address-out-of-range` (Snap7 item `0x0A`), not a distinct `write-protected` (`0x03`) — see [docs/compatibility.md](docs/compatibility.md).
+- Read-only write rejects normalize to `address-out-of-range` (Snap7 item `0x0A`), not a distinct `write-protected` (`0x03`) — see [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) (then `docs/compatibility.md`).
 - Timers / counters, Identify / SZL / CPU state / diagnostics, and block upload/download are deferred.
 - Optimized S7-1200/1500 DB addressing is out of v1 scope.
 - Test infrastructure only — do not expose to untrusted networks.

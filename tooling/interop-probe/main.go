@@ -177,7 +177,9 @@ func cmdCapabilities(w io.Writer) int {
 	}
 	sort.Strings(tokens)
 	for _, t := range tokens {
-		fmt.Fprintln(w, t)
+		if _, err := fmt.Fprintln(w, t); err != nil {
+			return 1
+		}
 	}
 	return 0
 }
