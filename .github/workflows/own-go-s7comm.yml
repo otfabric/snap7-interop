@@ -1,0 +1,201 @@
+name: Own stack (go-s7comm)
+run-name: "Build snap7-interop-otfabric from the latest go-s7comm, by @${{ github.actor }} on ${{ github.ref_name }}"
+
+# Manual only. Builds ghcr.io/otfabric/snap7-interop-otfabric from the latest
+# go-s7comm release, tests it with the self-tests and reference images of the
+# latest harness release and, when run from main, publishes it as
+# :<go-s7comm version> and :latest.
+#
+# Nothing is committed, and nothing else waits for this: no pin to bump, no
+# release, no schedule. So no release loop can form (own/go-s7comm/README.md).
+# The harness Release workflow does not build or publish this image.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: own-go-s7comm
+  cancel-in-progress: false
+
+env:
+  GOWORK: "off"
+  IMAGE: ghcr.io/otfabric/snap7-interop-otfabric
+  BASE_REGISTRY: mirror.gcr.io/library
+
+jobs:
+  version:
+    name: Resolve versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      upstream: ${{ steps.version.outputs.upstream }}
+      revision: ${{ steps.version.outputs.revision }}
+      harness: ${{ steps.version.outputs.harness }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: version
+        name: The latest go-s7comm, and the harness release to test against
+        env:
+          SHA: ${{ github.sha }}
+          REF: ${{ github.ref_name }}
+        run: |
+          upstream=$(git ls-remote --tags --refs https://github.com/otfabric/go-s7comm.git 'v[0-9]*' \
+            | sed 's,.*refs/tags/,,' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          [ -n "${upstream}" ] || { echo "::error::no go-s7comm release found"; exit 1; }
+          # An annotated tag has a peeled line, with the commit.
+          revision=$(git ls-remote --tags https://github.com/otfabric/go-s7comm.git "refs/tags/${upstream}^{}" | cut -f1)
+          [ -n "${revision}" ] || revision=$(git ls-remote --tags https://github.com/otfabric/go-s7comm.git "refs/tags/${upstream}" | cut -f1)
+          harness=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -1)
+          [ -n "${harness}" ] || { echo "::error::no harness release found"; exit 1; }
+          if [ "${REF}" = "main" ]; then publish="yes: ${IMAGE}:${upstream} and ${IMAGE}:latest"; else publish="no: not run from main"; fi
+          {
+            echo "upstream=${upstream}"
+            echo "revision=${revision}"
+            echo "harness=${harness}"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## Versions"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| go-s7comm (latest release) | \`${upstream}\` |"
+            echo "| go-s7comm commit | \`${revision}\` |"
+            echo "| Image tag | \`${upstream}\` |"
+            echo "| Reference images (latest harness release) | \`${harness}\` |"
+            echo "| This repository | \`${REF}\` at \`${SHA}\` |"
+            echo "| Publish | ${publish} |"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+  build:
+    name: Build, test (${{ matrix.arch }})
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      VERSION: ${{ needs.version.outputs.harness }}
+      UPSTREAM: ${{ needs.version.outputs.upstream }}
+      REVISION: ${{ needs.version.outputs.revision }}
+      OWN_IMAGE: ghcr.io/otfabric/snap7-interop-otfabric:ci
+      BUILD_PLATFORM: linux/${{ matrix.arch }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build from go-s7comm ${{ needs.version.outputs.upstream }}
+        run: |
+          for attempt in 1 2 3; do
+            docker build --progress=plain --build-arg BASE_REGISTRY="${BASE_REGISTRY}" \
+              --build-arg UPSTREAM_VERSION="${UPSTREAM}" --build-arg UPSTREAM_SHA="${REVISION}" \
+              --build-arg ADAPTER_VERSION="${UPSTREAM}" \
+              --tag "${OWN_IMAGE}" --file own/go-s7comm/Dockerfile . && exit 0
+            sleep $((attempt * 15))
+          done
+          exit 1
+
+      - name: What was built
+        run: |
+          docker run --rm "${OWN_IMAGE}" version | tee version.json
+          reported=$(jq -r '.upstreamVersion' version.json)
+          {
+            echo "## ${{ matrix.arch }}"
+            echo
+            jq -r '"- \(.name) adapter \(.adapterVersion): upstream \(.upstream) \(.upstreamVersion), commit `\(.upstreamRevision)`, independent engine: \(.independentEngine)"' version.json
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "${reported}" = "${UPSTREAM}" ] || { echo "::error::the image reports go-s7comm ${reported}, want ${UPSTREAM}"; exit 1; }
+
+      # The self-tests are those of the harness release whose reference images
+      # they run against: main's fixtures may already expect what only the
+      # next release's references do.
+      - name: Check out the self-tests of ${{ needs.version.outputs.harness }}
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.version.outputs.harness }}
+          path: harness
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: harness/go.mod
+
+      - name: Pull the reference images of ${{ needs.version.outputs.harness }}
+        run: |
+          for a in native python; do
+            for attempt in 1 2 3; do
+              docker pull --quiet "ghcr.io/otfabric/snap7-interop-${a}:${VERSION}" && break
+              [ "${attempt}" -lt 3 ] || exit 1
+              sleep $((attempt * 15))
+            done
+            echo "- snap7-interop-${a}:${VERSION}" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Smoke, cross-stack self-test against the references
+        working-directory: harness
+        run: |
+          set -o pipefail
+          mkdir -p reports/own
+          make probe-bin
+          make _smoke-run IMAGE="${OWN_IMAGE}" HOST_PORT=3102 RUN_PLATFORM="--platform=${BUILD_PLATFORM}" LABEL=otfabric 2>&1 | tee reports/own/smoke.log
+          REFERENCE_VERSION="${VERSION}" REFERENCES="native python" REPORT_DIR=reports/own \
+            own/go-s7comm/selftest.sh 2>&1 | tee reports/own/interop.log
+          grep -E '^\[interop\]|passed$' reports/own/smoke.log reports/own/interop.log | tee -a "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: own-go-s7comm-reports-${{ matrix.arch }}
+          path: harness/reports/
+          if-no-files-found: ignore
+
+      - name: Push the tested image as <version>-<arch>
+        if: github.ref == 'refs/heads/main'
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARCH: ${{ matrix.arch }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${ACTOR}" --password-stdin
+          docker tag "${OWN_IMAGE}" "${IMAGE}:${UPSTREAM}-${ARCH}"
+          docker push --quiet "${IMAGE}:${UPSTREAM}-${ARCH}"
+
+  publish:
+    name: Publish ${{ needs.version.outputs.upstream }} and latest
+    needs: [version, build]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    env:
+      UPSTREAM: ${{ needs.version.outputs.upstream }}
+    steps:
+      - name: Join the architectures
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${ACTOR}" --password-stdin
+          docker buildx imagetools create --tag "${IMAGE}:${UPSTREAM}" --tag "${IMAGE}:latest" \
+            "${IMAGE}:${UPSTREAM}-amd64" "${IMAGE}:${UPSTREAM}-arm64"
+          digest=$(docker buildx imagetools inspect "${IMAGE}:${UPSTREAM}" --format '{{.Manifest.Digest}}')
+          {
+            echo "## Published"
+            echo
+            echo "- \`${IMAGE}:${UPSTREAM}\`"
+            echo "- \`${IMAGE}:latest\`"
+            echo "- \`${IMAGE}@${digest}\`"
+          } | tee -a "$GITHUB_STEP_SUMMARY"

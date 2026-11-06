@@ -12,7 +12,10 @@ Thank you for your interest in contributing.
 5. Never silently ignore unsupported behavior — use capabilities / skips.
 6. Pin every external dependency (`versions.yaml`, Docker digests, Python pins).
 7. Preserve native/Python protocol independence.
-8. Do not add `go-s7comm` as a server dependency.
+8. Do not add `go-s7comm` as a dependency outside `own/go-s7comm/` (CI checks it). That
+   directory is our own stack behind the contract (`snap7-interop-otfabric`): run
+   `make -f own/go-s7comm/Makefile image smoke interop` when you change it. It is
+   built and tested only by the manual **Own stack (go-s7comm)** workflow.
 
 ## Development commands
 

@@ -22,7 +22,7 @@ images publish to GHCR. Remaining work is listed under [Open TODOs](#open-todos)
 Releases up to v0.2.0 were published as `ghcr.io/otfabric/snap-interop-native`
 and `ghcr.io/otfabric/snap-interop-python`; those tags stay available.
 
-This repository stays client-neutral: it does not depend on `go-s7comm`.
+This repository stays client-neutral: nothing outside `own/go-s7comm/` depends on `go-s7comm` (CI checks it). See [Our own stack](#our-own-stack).
 
 ## Table of contents
 
@@ -229,6 +229,20 @@ Prefer digest pins in go-s7comm CI:
 docker buildx imagetools inspect ghcr.io/otfabric/snap7-interop-native:v0.3.0
 ```
 
+## Our own stack
+
+`ghcr.io/otfabric/snap7-interop-otfabric` is OT Fabric's own S7 server, the `server` package of [go-s7comm](https://github.com/otfabric/go-s7comm), behind the same container contract (adapter name `otfabric`), so you can test an S7 client against our stack with the same fixtures and commands as the references:
+
+```bash
+docker run --rm -p 3102:102 --read-only \
+  --tmpfs /tmp --tmpfs /run/snap-interop:uid=10001,gid=10001,mode=0755 \
+  --cap-drop ALL --cap-add NET_BIND_SERVICE \
+  -e SNAP_INTEROP_FIXTURE=/fixtures/basic-db.compiled.json \
+  ghcr.io/otfabric/snap7-interop-otfabric:latest
+```
+
+It is **not an independent implementation** and not part of a harness release. The manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release, and publishes `:<go-s7comm version>` and `:latest` from `main`. It answers a write to a read-only area with the Siemens code `0x03` where the references send `0x0A` (a known difference). Details: [own/go-s7comm/README.md](own/go-s7comm/README.md).
+
 ## Container contract
 
 ```text
@@ -320,7 +334,7 @@ Typed values are compiled once into canonical bytes. Adapters do not encode type
 | Owns | Component |
 | --- | --- |
 | `snap7-interop` | Images, fixtures, compiler, dual-server equivalence |
-| `go-s7comm` | Client API assertions, client CI matrix, digest pins |
+| `go-s7comm` | Client API assertions, client CI matrix, digest pins; its manual Self-interop check runs its client against `snap7-interop-otfabric:latest` |
 
 ```text
 go-s7comm CI
@@ -340,6 +354,7 @@ snap7-interop/
 ├── fixtures/{schema,canonical,invalid,compiled}/
 ├── tooling/{fixturectl,interop-probe}/
 ├── servers/{native,python}/
+├── own/go-s7comm/      # our own stack (otfabric image), not a reference
 ├── internal/{fixture,interop,s7client}/
 ├── docs/{adr,compatibility.md,go-s7comm-coverage.md}/
 └── .github/workflows/

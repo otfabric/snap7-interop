@@ -1,0 +1,7 @@
+# Steps where the otfabric image answers differently from the fixture, on purpose.
+# fixture-id	step-index	outcome-otfabric-returns	reason
+# go-s7comm answers a write to a read-only area with item code 0x03 (accessing
+# the object not allowed, as Siemens defines it). Both reference servers send
+# 0x0A, which the fixture normalises to address-out-of-range
+# (docs/compatibility.md, "Distinct write-protected").
+read-only-reject	1	write-protected	item code 0x03 (Siemens), references 0x0A

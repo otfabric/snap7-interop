@@ -2,7 +2,7 @@
 
 ## What this is
 
-Deterministic, fixture-driven S7 servers in two independent implementations (the Snap7 C++ server and the python-snap7 server), used as black-box oracles by S7 clients such as go-s7comm. Profile: **interoperability**.
+Deterministic, fixture-driven S7 servers in two independent implementations (the Snap7 C++ server and the python-snap7 server), used as black-box oracles by S7 clients such as go-s7comm. `own/go-s7comm/` puts our own go-s7comm server behind the same contract (`snap7-interop-otfabric`); it is not an independent implementation. Profile: **interoperability**.
 
 ## Organisation standards
 
@@ -18,10 +18,11 @@ This repository follows **otfabric/engineering policy 1.2**, profile **interoper
 | Fixtures | fixtures/canonical, fixtures/schema/fixture.schema.json |
 | Upstream constraints and classified differences | docs/compatibility.md |
 | Client API to fixture mapping | docs/go-s7comm-coverage.md |
+| Our own stack image (otfabric, not a reference) | own/go-s7comm/README.md |
 
 ## Hard rules
 
-1. Nothing floats: the Snap7 revision, the python-snap7 version and base images by digest. `make notices` must pass.
+1. Nothing floats: the Snap7 revision, the python-snap7 version and base images by digest. `make notices` must pass. The one exception is the otfabric image, which builds the latest go-s7comm release by design (ADR-0012 in otfabric/engineering) and is not part of a release.
 2. Skips are never counted as passes; a capability a server lacks is an explicit `skip-unsupported`.
 3. The python image must not load the native Snap7 library.
 4. Never lower a gate, skip or delete tests to make CI pass.
@@ -36,6 +37,7 @@ This repository follows **otfabric/engineering policy 1.2**, profile **interoper
 | a server | `make images smoke-native smoke-python` |
 | behaviour across the two servers | `make interop` (Docker) |
 | third-party components | `make notices` |
+| `own/go-s7comm/` | `make -f own/go-s7comm/Makefile image smoke interop` (Docker) |
 
 ## Git and releases
 
