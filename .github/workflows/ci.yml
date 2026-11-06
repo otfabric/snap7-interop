@@ -52,6 +52,17 @@ jobs:
       - name: RELEASE.md has the notes of interop_version
         run: scripts/release-notes.sh > /dev/null
 
+      # Only own/go-s7comm may use our client library (ADR-0012): the
+      # references, the probe, the compiler and the scripts stay independent.
+      - name: Nothing outside own/ depends on go-s7comm
+        run: |
+          if grep -rnE 'github\.com/otfabric/go-s7comm' --include='*.go' --include='go.mod' --include='go.sum' \
+              --include='*.sh' --include='*.py' --include='Makefile' --include='Dockerfile' --include='*.toml' \
+              --include='requirements*.txt' --exclude-dir=own --exclude-dir=.git .; then
+            echo "::error::go-s7comm is used outside own/go-s7comm"
+            exit 1
+          fi
+
       - name: make ci
         run: make ci
 

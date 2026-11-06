@@ -63,6 +63,6 @@ by `make interop`. The canonical matrix (15 fixtures) passes on pinned
 
 | Topic | Native | Python | Interop handling |
 | --- | --- | --- | --- |
-| Distinct `write-protected` (item `0x03`) | ResourceLess callback fails as not-available (`0x0A`) | Matches native with `0x0A` | Fixture `read-only-reject` expects `address-out-of-range`; follow-up read proves bytes unchanged |
+| Distinct `write-protected` (item `0x03`) | ResourceLess callback fails as not-available (`0x0A`) | Matches native with `0x0A` | Fixture `read-only-reject` expects `address-out-of-range`; follow-up read proves bytes unchanged. Our own `otfabric` image (not a reference) sends `0x03`, reported as `write-protected`: listed in `own/go-s7comm/known-differences.tsv` |
 | Identify / SZL / CPU state | Upstream-specific | Upstream-specific | Deferred — not in fixture matrix |
 | Timers / counters | Deferred | Deferred | Not in schema v1 until characterized |

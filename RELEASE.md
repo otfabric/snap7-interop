@@ -18,9 +18,16 @@ Tags are immutable. A fix is a new version.
 
 ---
 
-## Unreleased
+## v0.5.0
+
+**Date:** 2026-11-06
+**Previous release:** v0.4.2
 
 ### Summary
+
+- **Our own stack behind the contract** (ADR-0012 in otfabric/engineering): `own/go-s7comm/` builds `ghcr.io/otfabric/snap7-interop-otfabric`, the go-s7comm `server` package behind the container contract, adapter name `otfabric`. It is not an independent implementation and not part of this release: the manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release (`own/go-s7comm/selftest.sh`), and publishes `:<go-s7comm version>` and `:latest` from `main`. Known difference: it answers a write to a read-only area with `0x03` where the references send `0x0A` (`own/go-s7comm/known-differences.tsv`).
+- **Contract 1.1**: adds the otfabric image, its `version` command and `independentEngine: false` in what it reports. The references are unchanged.
+- **CI**: checks that nothing outside `own/go-s7comm/` depends on go-s7comm.
 
 - **Go 1.25**: `golang.org/x/text` moves to v0.41.0 (govulncheck), which requires it; `versions.yaml` and CI follow.
 - **CI and release run on native runners**: each architecture builds on its own GitHub runner (`ubuntu-latest` for amd64, `ubuntu-24.04-arm` for arm64) in parallel, with no QEMU emulation. CI now also smoke-tests, scans and runs interop on arm64. The release pushes each image and architecture by digest, then joins them into one signed multi-arch manifest list under the release tags. Both architectures are scanned for fixable CRITICAL and HIGH findings before anything is tagged.

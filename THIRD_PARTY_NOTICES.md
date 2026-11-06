@@ -21,6 +21,19 @@ Snap7 is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later version.
 
+## go-s7comm, go-cotp, go-tpkt (otfabric image)
+
+| Field | Value |
+| --- | --- |
+| Components | go-s7comm, go-cotp, go-tpkt (OT Fabric) and the Go standard library |
+| Source | https://github.com/otfabric/go-s7comm (and its dependencies) |
+| Pin | none: the latest go-s7comm release when the image is built; the image reports it (`version`) |
+| License | MIT (OT Fabric modules), BSD-3-Clause (Go) |
+| Used by | `ghcr.io/otfabric/snap7-interop-otfabric` (statically linked) |
+
+The image carries every bundled module's licence under `/licenses`, with
+`/licenses/BUNDLED-MODULES.txt` listing the module versions.
+
 ## python-snap7 (Python server image)
 
 | Field | Value |
