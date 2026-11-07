@@ -236,8 +236,8 @@ make publish            # multi-arch push to GHCR (publish-arch, publish-manifes
 release with `VERSION=vX.Y.Z`:
 
 ```bash
-VERSION=v0.6.0 scripts/smoke.sh native
-VERSION=v0.6.0 ADAPTER_IMAGE_otfabric=ghcr.io/otfabric/snap7-interop-otfabric:latest scripts/interop.sh native otfabric
+VERSION=v0.6.1 scripts/smoke.sh native
+VERSION=v0.6.1 ADAPTER_IMAGE_otfabric=ghcr.io/otfabric/snap7-interop-otfabric:latest scripts/interop.sh native otfabric
 ```
 
 The daily Upstream workflow (`.github/workflows/upstream.yml`) compares the pins with

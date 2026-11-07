@@ -55,6 +55,9 @@ make -f own/go-s7comm/Makefile image smoke interop
 `interop` tests against the reference images of the latest harness tag
 (`VERSION=vX.Y.Z` to choose). Reports land in `reports/own/<reference>/`.
 
-Last local run, 2026-11-06, linux/arm64, go-s7comm v0.10.0 against v0.5.0:
-smoke passed; against each reference 14 pass, 1 known difference
-(`read-only-reject`), 0 fail.
+Last run, 2026-11-06, the Own stack workflow
+([run 42306587756](https://github.com/otfabric/snap7-interop/actions/runs/42306587756)),
+go-s7comm v0.10.1 against the v0.6.1 references: smoke passed; against each
+reference 14 pass, 1 known difference (`read-only-reject`, intentional), 0 fail.
+Published as `:v0.10.1` and `:latest`,
+`sha256:f6358529fd48eb5804612ff2cd394590b912f94c6eea0bca613629e5c5baab87`.
