@@ -56,9 +56,9 @@ make -f own/go-s7comm/Makefile image smoke interop
 (`VERSION=vX.Y.Z` to choose). Reports land in `reports/own/<reference>/`.
 
 Last run, 2026-11-07, the Own stack workflow
-([run 42339190582](https://github.com/otfabric/snap7-interop/actions/runs/42339190582)),
-go-s7comm v0.10.2 against the v0.6.1 references: smoke passed; against each
+([run 42349157492](https://github.com/otfabric/snap7-interop/actions/runs/42349157492)),
+go-s7comm v0.12.0 against the v0.6.1 references: smoke passed; against each
 reference 14 pass, 1 known difference (`read-only-reject`, intentional), 0 fail.
-Published as `:v0.10.2`,
-`sha256:e08fadb33956a33eb513625298968da40670c7991bab03f12c785809382fd587`
+Published as `:v0.12.0`,
+`sha256:3a5e98b34f6fcdfa767b5badcc9b46aad4efdb565e72324045e643888f929eaf`
 (`:latest` follows the newest run).
