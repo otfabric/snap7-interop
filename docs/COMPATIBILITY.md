@@ -70,6 +70,7 @@ semantic difference, not a bug on either side.
 | Apache PLC4X S7 model, [DataTransportErrorCode](https://github.com/apache/plc4x/blob/develop/plc4go/protocols/s7/readwrite/model/DataTransportErrorCode.go) | `ACCESS_DENIED` | `INVALID_ADDRESS` | `NOT_FOUND` |
 | python-snap7 3.3.1 (latest release; the python adapter pins 3.2.1) `S7_RETURN_CODES` (client) | Accessing the object not allowed | Invalid address | Object does not exist |
 | Snap7 (SCADACS f6ff903) `s7_types.h` | not defined | `Code7AddressOutOfRange` | `Code7ResItemNotAvailable` |
+| Recorded: CPU 1214C DC/DC/DC (S7-1200, firmware V4.2), DB write-protected, PUT/GET on ([capture](https://github.com/gijzelaerr/python-snap7/issues/976#issuecomment-6800464989)) | sent for a write to the write-protected DB | | |
 
 - The Siemens table is published for the FETCH/WRITE diagnostic buffer, not
   explicitly for the S7comm Write Var item byte; its values and meanings agree
@@ -87,8 +88,14 @@ semantic difference, not a bug on either side.
   ([PLC4X, 2026-08-16](https://www.mail-archive.com/commits@plc4x.apache.org/msg24099.html)).
   Connection-level access control is a different case from per-item write
   protection; the fixtures do not normalise one into the other.
-- What a physical Siemens CPU sends per item for a write-protected DB is not
-  verified yet. The capture plan and the clarification questions to
+- A real CPU sends `0x03`: a CPU 1214C DC/DC/DC (S7-1200, firmware V4.2) with
+  DB 1 write-protected and PUT/GET enabled answers a python-snap7 write to
+  DB1.DBB0 with item code `0x03` and no header error. The Wireshark capture was
+  posted on [python-snap7#976](https://github.com/gijzelaerr/python-snap7/issues/976#issuecomment-6800464989);
+  go-s7comm keeps it byte-identical in `testdata/captures/python-snap7/` and its
+  `wire` and `server` tests pin it. So the `otfabric` image's `0x03` is what this
+  CPU sends, and the references' `0x0A` is not. An S7-300, S7-400 or S7-1500
+  answering this case is not recorded yet. The clarification questions to
   [python-snap7](https://github.com/gijzelaerr/python-snap7/issues/976),
   [Snap7 (SCADACS)](https://github.com/SCADACS/snap7/issues/26) and
   [Apache PLC4X](https://github.com/apache/plc4x/discussions/2850) are tracked in

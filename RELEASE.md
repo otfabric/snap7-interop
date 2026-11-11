@@ -18,6 +18,14 @@ Tags are immutable. A fix is a new version.
 
 ---
 
+## Unreleased
+
+### Documentation
+
+- `docs/COMPATIBILITY.md`, *Write to a read-only area*, and the README: a real CPU 1214C DC/DC/DC (S7-1200, firmware V4.2) answers a write to a write-protected DB with item code `0x03` and no header error. The capture was posted on [python-snap7#976](https://github.com/gijzelaerr/python-snap7/issues/976#issuecomment-6800464989) and is kept in go-s7comm's `testdata/captures`. The `otfabric` image's `0x03` is the code this CPU sends. An S7-300 or S7-1500 is still open (#19).
+
+---
+
 ## v0.6.1
 
 **Date:** 2026-11-06
