@@ -94,7 +94,7 @@ Client API mapping for go-s7comm is in
 | Block list / upload / download | **deferred** | Outside memory interop contract |
 | Client-only APIs (`ProbeReadableRanges`, `CompareRead`, discovery, rack/slot probe) | **not fixture-gated here** | Orchestration belongs in the client; servers covered by OOR/span/memory fixtures |
 | Multi-PDU client chunking beyond negotiated PDU | **client-side** | `large-read` covers a large *single* request; go-s7comm chunks larger spans |
-| Distinct wire code for “write-protected” (`0x03`) | **classified difference** | Stock Snap7 ResourceLess rejects as `0x0A`; both adapters match that surface. The otfabric image sends the Siemens `0x03` ([COMPATIBILITY.md](docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)) |
+| Distinct wire code for “write-protected” (`0x03`) | **classified difference** | Stock Snap7 ResourceLess rejects as `0x0A`; both adapters match that surface. The otfabric image sends the Siemens `0x03`, as a recorded S7-1200 does ([COMPATIBILITY.md](docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)) |
 
 Do not encode unresolved assumptions into the fixture schema. Document
 differences in [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md).
@@ -110,7 +110,7 @@ Potential follow-ups (not blockers for current GHCR consumption):
 | Timers / counters memory areas | Characterize both adapters, then extend schema + fixtures |
 | Identify / SZL / CPU state / diagnostics | Characterize both adapters before freezing expectations |
 | Block list / upload / download | Outside current memory interop contract |
-| Real-CPU read-only write capture | What a physical S7-1200/S7-300/S7-1500 sends per item for a write-protected DB ([#19](https://github.com/otfabric/snap7-interop/issues/19)) |
+| Real-CPU read-only write capture | Recorded for an S7-1200 (CPU 1214C, V4.2: item `0x03`, [COMPATIBILITY.md](docs/COMPATIBILITY.md#write-to-a-read-only-area-0x03-and-0x0a)); an S7-300 or S7-1500 is still open ([#19](https://github.com/otfabric/snap7-interop/issues/19)) |
 | Optimized S7-1200/1500 DB addressing | Out of v1 scope until characterized |
 
 When closing a TODO, update this table and any related fixture/docs.
