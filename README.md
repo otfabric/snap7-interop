@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml/badge.svg)](https://github.com/otfabric/snap7-interop/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](versions.yaml)
+[![Latest Release](https://img.shields.io/github/v/release/otfabric/snap7-interop?label=release)](https://github.com/otfabric/snap7-interop/releases)
 [![Platforms](https://img.shields.io/badge/platforms-linux%2Famd64%20%7C%20linux%2Farm64-informational)](#published-images-ghcr)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go&logoColor=white)](versions.yaml)
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](versions.yaml)
@@ -148,18 +148,18 @@ catalog, the layout of `fixtures/`, the invalid fixtures and how to add one:
 ## Published images (GHCR)
 
 Tags are immutable (no floating `latest`): `v<version>` and `<version>` from
-`versions.yaml` (`interop_version`, currently `0.3.0`). Changelog: [RELEASE.md](RELEASE.md).
+`versions.yaml` (`interop_version`, currently `0.6.1`). Changelog: [RELEASE.md](RELEASE.md).
 
 ```bash
-docker pull ghcr.io/otfabric/snap7-interop-native:v0.3.0
-docker pull ghcr.io/otfabric/snap7-interop-python:v0.3.0
+docker pull ghcr.io/otfabric/snap7-interop-native:v0.6.1
+docker pull ghcr.io/otfabric/snap7-interop-python:v0.6.1
 
 docker run --rm -p 1102:102 --read-only \
   --tmpfs /tmp --tmpfs /run/snap-interop:uid=10001,gid=10001,mode=0755 \
   --cap-drop ALL --cap-add NET_BIND_SERVICE \
   -v "$PWD/fixtures/compiled:/fixtures:ro" \
   -e SNAP_INTEROP_FIXTURE=/fixtures/basic-db.compiled.json \
-  ghcr.io/otfabric/snap7-interop-native:v0.3.0
+  ghcr.io/otfabric/snap7-interop-native:v0.6.1
 ```
 
 Publish multi-arch images (requires `docker login ghcr.io` with `write:packages`;
@@ -167,13 +167,13 @@ set package visibility to **Public** for anonymous pulls):
 
 ```bash
 make publish
-# IMAGE_TAG=0.3.0 PUBLISH_PLATFORMS=linux/amd64,linux/arm64 make publish
+# IMAGE_TAG=0.6.1 PUBLISH_PLATFORMS=linux/amd64,linux/arm64 make publish
 ```
 
 Prefer digest pins in go-s7comm CI:
 
 ```bash
-docker buildx imagetools inspect ghcr.io/otfabric/snap7-interop-native:v0.3.0
+docker buildx imagetools inspect ghcr.io/otfabric/snap7-interop-native:v0.6.1
 ```
 
 ## Our own stack
