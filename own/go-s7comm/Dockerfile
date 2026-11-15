@@ -14,12 +14,12 @@
 # work.
 
 ARG BASE_REGISTRY=docker.io/library
-# golang:1.27.2-trixie and debian:trixie-slim, multi-arch indexes
+# golang:1.27.4-trixie and debian:trixie-slim, multi-arch indexes
 # (linux/amd64 and linux/arm64).
-ARG GOLANG_DIGEST=sha256:e58d6f83b3416618d8bcac2b3dde1b7f7e3c4a77d25e88637f8bbae81536c48d
-ARG DEBIAN_DIGEST=sha256:f6b08b09a05725f9431502d3b5714f5c4576e82c1a84fa1debe0c24a7e0c3ec4
+ARG GOLANG_DIGEST=sha256:b54b2639de8c1bfe538ec5ffc45f29b1932235ac5f6d63c059853646677112d9
+ARG DEBIAN_DIGEST=sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
 
-FROM ${BASE_REGISTRY}/golang:1.27.2-trixie@${GOLANG_DIGEST} AS build
+FROM ${BASE_REGISTRY}/golang:1.27.4-trixie@${GOLANG_DIGEST} AS build
 
 ARG UPSTREAM_VERSION
 ARG UPSTREAM_SHA
@@ -71,7 +71,11 @@ FROM ${BASE_REGISTRY}/debian:trixie-slim@${DEBIAN_DIGEST} AS runtime
 ARG ADAPTER_VERSION=dev
 ARG UPSTREAM_VERSION
 
-RUN useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin snap \
+# Take the Debian security updates the pinned base image does not carry yet,
+# like the adapters' images.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --no-create-home --shell /usr/sbin/nologin snap \
     && mkdir -p /run/snap-interop \
     && chown snap /run/snap-interop
 
