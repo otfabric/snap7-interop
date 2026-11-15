@@ -4,8 +4,8 @@
 
 1. Rename **Unreleased** below to `## vX.Y.Z` (with `**Date:**` and `**Previous release:**`), and set `snap7_interop` in `versions.yaml` to the same version, in one change. `make lint` (and so `make ci` and CI) fails when RELEASE.md has no notes for `snap7_interop`.
 2. `make ci` on the commit to release.
-3. Run the `Release` workflow on `main` from the Actions tab and pick the bump (`patch` by default, `minor` or `major`) that gives `vX.Y.Z`, or push the tag `vX.Y.Z` yourself. The release workflow checks the notes of the tag first, then runs `make ci`, builds each image on a native amd64 and arm64 runner, scans it, pushes it by digest, joins the two digests into one signed multi-arch manifest list under `vX.Y.Z` and `X.Y.Z`, and creates the GitHub release with `images.txt`, `versions.yaml`, `THIRD_PARTY_NOTICES.md`, a source SBOM and `SHA256SUMS`.
-4. Consumers pin the digests from the release body or `images.txt`.
+3. Run the `Release` workflow on `main` from the Actions tab and pick the bump (`patch` by default, `minor` or `major`) that gives `vX.Y.Z`, or push the tag `vX.Y.Z` yourself. The release workflow checks the notes of the tag first, then runs `make ci`, builds each image on a native amd64 and arm64 runner, scans it, pushes it by digest, joins the two digests into one signed multi-arch manifest list under `vX.Y.Z` and `X.Y.Z`, and creates the GitHub release with `manifest.json` (`scripts/release-manifest.py`), `images.txt`, `versions.yaml`, `THIRD_PARTY_NOTICES.md`, a source SBOM and `SHA256SUMS`.
+4. Consumers pin the digests from the release body, `manifest.json` or `images.txt`.
 
 The notes are the body of the GitHub release, followed by the image digests:
 everything after the heading `## vX.Y.Z` up to the next line that is exactly
@@ -18,7 +18,26 @@ Tags are immutable. A fix is a new version.
 
 ---
 
-## Unreleased
+## v0.7.0
+
+**Date:** 2026-11-15
+**Previous release:** v0.6.1
+
+### Summary
+
+The release publishes `manifest.json`, and `versions.yaml` records every reference with the fields `results.json` and the manifest take from it. OT Fabric's own image is scanned before it is pushed. Images, the container contract and the fixtures are unchanged.
+
+### Added
+
+- **`manifest.json`** in the GitHub release, written by `scripts/release-manifest.py`: the release version and commit, the contract and fixture schema versions, the platforms, and per published reference its image by digest and its upstream (name, repository, version, revision, licence, roles). The release fails without a digest for every reference that `versions.yaml` marks `published: true`. `images.txt` stays.
+- `versions.yaml`: `native_snap7` gains `name`, `version` (`f6ff90317ca5`, the short revision: the SCADACS fork has no releases), `roles` and `published`; `python_snap7` gains `repository`, `license`, `roles` and `published`. `scripts/check-versions.sh` also checks that the Snap7 version is the short revision of the Dockerfile's, and that a reference is `published: true` exactly when `PUBLISHED_ADAPTERS` of the Makefile and `images:` name it.
+
+### Changed
+
+- `scripts/report-to-results.py` takes the name, repository, version, revision and licence of the references from `versions.yaml` (`scripts/references.py`) instead of constants, and refuses an entry without them. `results.json` is unchanged except that python-snap7 now has its `upstream`.
+- The **Own stack (go-s7comm)** workflow scans `snap7-interop-otfabric` with the release gate (Trivy, fixable CRITICAL and HIGH) before it pushes it. SECURITY.md says that this image is scanned like the release images and that it has a floating `:latest`, which a rebuild replaces.
+- `own/go-s7comm` requires go-cotp v1.4.2 and go-tpkt v1.2.2 (fewer allocations per segment and packet; nothing changes on the wire or in the API). The image is published by hand, outside this release.
+- CONTRIBUTING.md, *When CI runs*: what the release workflow runs.
 
 ### Documentation
 

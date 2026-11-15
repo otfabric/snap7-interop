@@ -102,6 +102,6 @@ See [SECURITY.md](SECURITY.md). Do not expose port 102 publicly in examples.
 | Push to a branch | none | nothing; dispatch `ci.yml` to test a branch without a pull request |
 | Push to `main` | `policy.yml` | the light checks; the merged commit was tested as the pull request's merge commit |
 | Schedule | `upstream.yml` | the scheduled runs, on `main` |
-| Release | `release.yml` | the release workflow tests the release commit again |
+| Release | `release.yml` | on a tag push or a manual run: checks the tag against `versions.yaml` and RELEASE.md, runs `check-notices.sh` and `make ci` (lint, unit tests, fixture validation, tooling build; no Docker), builds each image on an amd64 and an arm64 runner, scans it (fixable CRITICAL and HIGH fail), pushes it by digest, joins and signs the multi-arch images, and publishes the GitHub release with `manifest.json`. It runs no smoke or interop test of the images |
 
 Documentation means an added or modified `*.md` file outside `.github/`, `testdata/` and `vendor/`, other than `AGENTS.md` and `CLAUDE.md`. A deleted or renamed document, or any other file, runs everything. `OT Fabric Required Checks` fails unless every job that applies succeeded; its summary lists them.

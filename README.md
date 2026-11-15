@@ -188,7 +188,7 @@ docker run --rm -p 3102:102 --read-only \
   ghcr.io/otfabric/snap7-interop-otfabric:latest
 ```
 
-It is **not an independent implementation** and not part of a harness release. The manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release, and publishes `:<go-s7comm version>` and `:latest` from `main`. It answers a write to a read-only area with the Siemens code `0x03` where the references send `0x0A` (an intentional, classified difference). Details: [own/go-s7comm/README.md](own/go-s7comm/README.md).
+It is **not an independent implementation** and not part of a harness release. The manual workflow **Own stack (go-s7comm)** builds it from the latest go-s7comm release, runs the smoke test and every fixture against the reference images of the latest harness release, scans it with the release gate (fixable CRITICAL and HIGH), and publishes `:<go-s7comm version>` and `:latest` from `main`. It answers a write to a read-only area with the Siemens code `0x03` where the references send `0x0A` (an intentional, classified difference). Details: [own/go-s7comm/README.md](own/go-s7comm/README.md).
 
 ## Container contract
 

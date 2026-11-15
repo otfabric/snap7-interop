@@ -298,10 +298,14 @@ jobs:
             echo "python_tag: ${TAG}"
             echo "python_digest: ${PYTHON_DIGEST}"
           } > dist/release/images.txt
+          # manifest.json: the digests and the upstream of every published
+          # reference (versions.yaml); fails without a digest for each.
+          scripts/release-manifest.py "${TAG}" "${{ github.sha }}" dist/release/manifest.json \
+            "native=${NATIVE_DIGEST}" "python=${PYTHON_DIGEST}"
           cp versions.yaml dist/release/versions.yaml
           cp THIRD_PARTY_NOTICES.md dist/release/THIRD_PARTY_NOTICES.md
-          sha256sum dist/release/images.txt dist/release/versions.yaml dist/release/THIRD_PARTY_NOTICES.md > dist/release/SHA256SUMS
-          cat dist/release/images.txt
+          sha256sum dist/release/manifest.json dist/release/images.txt dist/release/versions.yaml dist/release/THIRD_PARTY_NOTICES.md > dist/release/SHA256SUMS
+          cat dist/release/images.txt dist/release/manifest.json
 
       - name: Source SBOM
         uses: anchore/sbom-action@v0
@@ -334,7 +338,7 @@ jobs:
             echo "docker pull ${PYTHON_IMAGE}@${PYTHON_DIGEST}"
             echo '```'
             echo
-            echo "\`images.txt\` and \`versions.yaml\` record the images and the upstream pins they were built from. The native image contains Snap7 (LGPL-3.0-or-later), the Python image python-snap7 (MIT); see \`THIRD_PARTY_NOTICES.md\`."
+            echo "\`manifest.json\` (and \`images.txt\`) and \`versions.yaml\` record the images and the upstream pins they were built from. The native image contains Snap7 (LGPL-3.0-or-later), the Python image python-snap7 (MIT); see \`THIRD_PARTY_NOTICES.md\`."
           } > "${RUNNER_TEMP}/release-body.md"
           cat "${RUNNER_TEMP}/release-body.md"
 

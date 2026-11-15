@@ -28,12 +28,12 @@ references from versions.yaml, any other image from its `version` command
 
 import csv
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 import interop_result
+import references as reference_entries
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTCOME = {"pass": "pass", "fail": "fail", "invalid": "fail",
@@ -43,12 +43,14 @@ DEFAULT_SERVERS = (("native", None), ("python", None))
 
 
 def references(text):
-    """The reference implementations, from versions.yaml."""
-    native = re.search(r'^native_snap7:\n(?:  .*\n)*?  revision: "([^"]+)"', text, re.M).group(1)
-    python = re.search(r'^python_snap7:\n(?:  .*\n)*?  version: "([^"]+)"', text, re.M).group(1)
-    return {"native": {"name": "snap7", "upstream": "https://github.com/SCADACS/snap7", "version": native[:12],
-                       "revision": native, "license": "LGPL-3.0-or-later", "independent": True},
-            "python": {"name": "python-snap7", "version": python, "license": "MIT", "independent": True}}
+    """The reference implementations: name, upstream, version, revision and
+    licence as versions.yaml records them (scripts/references.py)."""
+    out = {}
+    for adapter, ref in reference_entries.load(text).items():
+        impl = {k: ref[k] for k in ("name", "upstream", "version", "revision", "license") if k in ref}
+        impl["independent"] = True
+        out[adapter] = impl
+    return out
 
 
 def self_report(image, run=subprocess.run):
