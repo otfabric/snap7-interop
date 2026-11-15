@@ -3,8 +3,9 @@ run-name: "Build snap7-interop-otfabric from the latest go-s7comm, by @${{ githu
 
 # Manual only. Builds ghcr.io/otfabric/snap7-interop-otfabric from the latest
 # go-s7comm release, tests it with the self-tests and reference images of the
-# latest harness release and, when run from main, publishes it as
-# :<go-s7comm version> and :latest.
+# latest harness release, scans it with the release gate (fixable CRITICAL and
+# HIGH) and, when run from main, publishes it as :<go-s7comm version> and
+# :latest.
 #
 # Nothing is committed, and nothing else waits for this: no pin to bump, no
 # release, no schedule. So no release loop can form (own/go-s7comm/README.md).
@@ -163,6 +164,17 @@ jobs:
           name: own-go-s7comm-reports-${{ matrix.arch }}
           path: harness/reports/
           if-no-files-found: ignore
+
+      # The gate of the release images (SECURITY.md): a fixable CRITICAL or
+      # HIGH finding fails the job, so nothing is pushed.
+      - name: Scan (fixable CRITICAL,HIGH block publishing)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ env.OWN_IMAGE }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
 
       - name: Push the tested image as <version>-<arch>
         if: github.ref == 'refs/heads/main'

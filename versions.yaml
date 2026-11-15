@@ -1,20 +1,32 @@
 # Machine-readable version manifest for snap7-interop.
 # Image digests and upstream pins are release artifacts; do not float tags.
 
-interop_version: "0.6.1"
+interop_version: "0.7.0"
 contract_version: "1.1"       # docs/CONTAINER_CONTRACT.md
 fixture_schema: "1.0.0"
 fixture_compiler: "0.1.0"
 
+# The two reference implementations (adapters native and python). name,
+# repository, version, revision, license, roles and published are what
+# results.json and the release's manifest.json say of them
+# (scripts/references.py); scripts/check-versions.sh checks them.
 native_snap7:
+  name: "snap7"
   repository: "https://github.com/SCADACS/snap7"
+  version: "f6ff90317ca5"       # the fork has no releases: the short revision
   revision: "f6ff90317ca5d54250f4dcd29209689a74e26d82"
   license: "LGPL-3.0-or-later"
+  roles: [server]
+  published: true               # images.native
   note: "SCADACS fork (Snap7 1.4.0 lineage). linux/arm64 uses in-tree aarch64_linux.mk."
 
 python_snap7:
   package: "python-snap7"
+  repository: "https://github.com/gijzelaerr/python-snap7"
   version: "3.2.1"
+  license: "MIT"
+  roles: [server]
+  published: true               # images.python
   extras: []
   note: "Pure-Python Server API (snap7.server.Server). Image must not load libsnap7."
 

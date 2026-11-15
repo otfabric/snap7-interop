@@ -132,6 +132,29 @@ class Convert(unittest.TestCase):
         with self.assertRaises(ValueError):
             rr.parse_servers("native")
 
+    def test_the_references_are_named_as_versions_yaml_records_them(self):
+        text = (Path(HERE).parent / "versions.yaml").read_text().replace("\r\n", "\n")
+        doc = convert(report("pass"))
+        native, python = doc["implementations"][:2]
+        for impl, section in ((native, "native_snap7"), (python, "python_snap7")):
+            with self.subTest(section=section):
+                block = text.split("\n%s:\n" % section, 1)[1].split("\n\n", 1)[0]
+                for key, field in (("upstream", "repository"), ("version", "version"), ("license", "license")):
+                    self.assertIn('  %s: "%s"' % (field, impl[key]), block)
+        self.assertEqual(native["revision"][:12], native["version"])
+
+    def test_a_licence_changed_in_versions_yaml_is_the_licence_of_the_results(self):
+        text = (Path(HERE).parent / "versions.yaml").read_text().replace("\r\n", "\n")
+        changed = text.replace('  license: "MIT"', '  license: "BSD-3-Clause"', 1)
+        changed = changed.replace('  license: "LGPL-3.0-or-later"', '  license: "LGPL-2.1-only"', 1)
+        refs = rr.references(changed)
+        self.assertEqual((refs["native"]["license"], refs["python"]["license"]), ("LGPL-2.1-only", "BSD-3-Clause"))
+
+    def test_a_reference_without_a_licence_is_refused(self):
+        text = (Path(HERE).parent / "versions.yaml").read_text().replace("\r\n", "\n")
+        with self.assertRaises(ValueError):
+            rr.references(text.replace('  license: "MIT"\n', "", 1))
+
     def test_no_fixture_fails(self):
         doc = rr.convert("/nonexistent", "2026-10-30T00:00:00Z", "2026-10-30T00:00:01Z", "make interop", [])
         doc["summary"] = interop_result.summarize(doc["results"])

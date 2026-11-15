@@ -32,18 +32,21 @@ disclosure timeline.
 
 ## Release-blocking vulnerability policy
 
-Image and dependency scans (`make scan`, CI `scan` / release workflows) use
-[Trivy](https://github.com/aquasecurity/trivy). Severity gates:
+Image and dependency scans (`make scan`, CI `scan`, the release and Own stack
+workflows) use [Trivy](https://github.com/aquasecurity/trivy). Severity gates:
 
 | Context | Blocking severities | Action |
 | --- | --- | --- |
 | Pull request / image `scan` job | **CRITICAL** (fixable) | Fail the job; fix or document an accepted exception before merge |
-| Release / published GHCR images | **CRITICAL** and **HIGH** (fixable) | Fail the release; do not publish |
+| Release / published GHCR images, including OT Fabric's own image | **CRITICAL** and **HIGH** (fixable) | Fail the release or the Own stack run; do not publish |
 
 Scans use Trivy `--ignore-unfixed`: base-image CVEs with no fixed package in the
 distro are reported for awareness but do not block. Accepted exceptions for
 *fixable* findings MUST be recorded in an ADR or release notes with owner,
 expiry, and rationale.
 
-Floating tags (`latest`) are not used for published images; release tags and
-digests are immutable.
+Release images use no floating tag (`latest`); their release tags and digests
+are immutable. OT Fabric's own image, `ghcr.io/otfabric/snap7-interop-otfabric`,
+is not part of a release: the Own stack workflow publishes it as
+`:<go-s7comm version>` and `:latest`, and a rebuild replaces both tags
+([own/go-s7comm/README.md](own/go-s7comm/README.md)). Pin it by digest.

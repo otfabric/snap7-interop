@@ -21,9 +21,9 @@ security advisories, and old tags stay available.
 | Source | `main.go` here: loads a compiled fixture, registers its areas with `server.RegisterDB`/`RegisterArea`, serves it, writes the state snapshot |
 | Library | the latest go-s7comm release when the job runs, never `main`; no pin in this repository |
 | Workflow | **Own stack (go-s7comm)** (`.github/workflows/own-go-s7comm.yml`), manual only |
-| Tests | `go test` in the build; the contract smoke test; every fixture against both reference images of the latest harness release |
+| Tests | `go test` in the build; the contract smoke test; every fixture against both reference images of the latest harness release; a Trivy scan with the release gate (fixable CRITICAL and HIGH fail the run, so nothing is pushed) |
 | Tags | `:<go-s7comm version>` and `:latest`, from `main` only; a rebuild replaces its tag |
-| Release | not in a harness release or its `images.txt` |
+| Release | not in a harness release, its `manifest.json` or `images.txt` |
 
 Nothing is committed between this repository and go-s7comm, so no release loop
 can form: go-s7comm's manual **Self-interop** check uses `:latest` and logs the
